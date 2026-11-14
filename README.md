@@ -22,6 +22,18 @@ Open **http://localhost:8501**. The preparation command downloads the approximat
 
 The prepared dataset in this workspace covers **January 1979–October 2026**; complete calendar years through **2025** are available for annual exploration. The default analysis is **2001–2024**, with a **2001–2020** anomaly baseline. Coverage follows the downloaded file, not a hardcoded latest date.
 
+## Recent country briefings
+
+Immediately below the map in **Evidence atlas**, the **Country briefing** gives a plain-language assessment of the latest three complete calendar years, independently of the long-term analysis window. The current GPCP snapshot defaults to **2023–2025**; incomplete 2026 observations are excluded. Choose another ending year or a 3-, 5-, or 10-year assessment. Changing the briefing country also selects it for the map and historical explorer.
+
+The explanation states whether rainfall deficits persisted, how much accumulated country-average rainfall differed from the selected baseline, how many years were below its annual mean, and whether the latest year improved or deteriorated. **Persistent rainfall deficit** means every assessed year was below the baseline annual mean. **Multi-year rainfall deficit** means cumulative rainfall was below expectation but not every year was dry. **No multi-year rainfall deficit** does not rule out a dry latest year; its rainfall and baseline comparison are stated explicitly. Missing recent years produce **Insufficient data**, not a partial-period estimate.
+
+Expected accumulation is baseline mean annual rainfall × assessment length. Percentage departures are withheld below a 10 mm/year baseline mean. Historical rarity uses an empirical midrank among complete, overlapping windows of the same length wholly within the baseline, with at least ten valid baseline years, ten complete reference windows and nonzero reference-window variability. This is a descriptive comparison, not SPI, a p-value, independent samples, or a future probability. Counts of annual standardized anomalies ≤ −1.5 are reported separately; zero baseline variance withholds these counts.
+
+**Why this assessment?** explains the area-weighted share of included GPCP cells with below-baseline accumulated rainfall, its valid spatial coverage, and agreement or disagreement with the longer-term trend. These cells are compared with their own baselines; the national average does not imply uniform conditions. The cross-country table compares recent precipitation conditions against each country's own reference climate, without ranking drought susceptibility. Source interim-status warnings remain visible. Notebook pins retain the recent period, country explanation, annual observations, spatial weighting, baseline, source checksum and trend context; illustrated reports export the recent country observations separately.
+
+Precipitation deficits are evidence of meteorological dryness, not a complete assessment of agricultural/hydrological drought, vulnerability, impacts, or susceptibility. Soil moisture, evaporative demand, temperature, water availability and exposure require additional evidence. No drought-risk score, official declaration, causal claim, or forecast is generated.
+
 ## Explore
 
 - Pan, zoom, and hover over actual **2.5° cells** in the MENA precipitation map. Geographic context uses local boundaries rather than requiring remote map tiles.

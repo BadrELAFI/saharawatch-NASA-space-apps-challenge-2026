@@ -24,12 +24,17 @@ def build_report_archive(clues):
         for i,clue in enumerate(clues,1):
             parts.append(f'<article><h2>Clue {i}: {html.escape(clue["location"])}</h2><table>')
             for key,value in clue.items():
-                if key not in ['annual_data','chart_json']:
+                if key not in ['annual_data','chart_json','recent_country_briefing']:
                     parts.append(f'<tr><td>{html.escape(key.replace("_"," "))}</td><td>{html.escape(str(value))}</td></tr>')
             parts.append('</table>')
             if clue.get('annual_data'):
                 frame=pd.DataFrame(clue['annual_data'])
                 archive.writestr(f'data/clue_{i:02d}.csv',frame.to_csv(index=False))
+            recent=clue.get('recent_country_briefing')
+            if recent and recent.get('annual_years'):
+                frame=pd.DataFrame({'year':recent['annual_years'],'observed_mm':recent['annual_mm'],
+                                    'baseline_annual_mean_mm':recent.get('baseline_annual_mean_mm',np.nan)})
+                archive.writestr(f'data/clue_{i:02d}_recent_country.csv',frame.to_csv(index=False))
             for name,serialized in clue.get('chart_json',{}).items():
                 figure=go.Figure(json.loads(serialized))
                 image=figure.to_image(format='png',width=1100,height=420,scale=1)

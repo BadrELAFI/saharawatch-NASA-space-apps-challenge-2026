@@ -6,6 +6,7 @@ import pandas as pd
 import streamlit as st
 from saharawatch.data import (ROOT, RAW, VARIABLES, load_data, complete_years, grid_series,
                               select_period, boundaries, country_mask, regional_series, country_weights)
+from saharawatch.briefing import render_country_briefing, assessment_text
 from saharawatch.inference import METHODS, analyze_trend, inference_grid
 from saharawatch.temperature import render_temperature
 from saharawatch.reports import build_report_archive
@@ -67,6 +68,10 @@ def select_map_cell():
         latitude,longitude=map(float,custom[:2])
         if 10<=latitude<=43 and -18<=longitude<=63:
             st.session_state.update(mode='Grid cell',lat=latitude,lon=longitude)
+
+
+def select_briefing_country():
+    st.session_state.update(mode='Country aggregation',country=st.session_state['brief_country'])
 
 
 def preset(name):
@@ -240,6 +245,11 @@ with explorer:
         st.caption('Relative trends are withheld where mean annual rainfall is below 10 mm/year.')
     if indicator == 'Standardized anomaly':
         st.caption('Annual standardized anomaly = (observed − baseline mean) / baseline sample standard deviation. This is not SPI.')
+    st.divider()
+    country_brief=render_country_briefing(annual,countries,years,metadata['sha256'],bstart,bend,weighting,start,end,alpha,inference_method,
+                                        country if mode=='Country aggregation' else None,select_briefing_country)
+    st.caption('Source status: '+metadata['attributes'].get('data_comment','Provisional status not specified.'))
+    st.divider()
     if indicator in ['Annual anomaly', 'Relative anomaly', 'Standardized anomaly']:
         observed_mm = float(whole_series.sel(year=anomaly_year))
         departure_mm = float(anomaly.sel(year=anomaly_year))
@@ -348,9 +358,13 @@ with notebook:
                         alpha=alpha, valid_years=result['n'], status=result['status'],
                         observation_year=anomaly_year, anomaly_mm=fmt(float(anomaly.sel(year=anomaly_year))),
                         checks=sum(checks), notes=notes, assessment=assessment,
+                        recent_country_explanation=assessment_text(country_brief['country'],country_brief) if country_brief else '',
+                        recent_country_briefing=dict(country_brief) if country_brief else None,
                         annual_data=json.loads(export.to_json(orient='records')),
                         chart_json={'rainfall':history_figure(series,result,float(baseline_mean)).to_json(),
                                     'anomalies':anomaly_figure(anomaly.sel(year=series.year),False,series,baseline_mean).to_json()})
+        if snapshot.get('recent_country_briefing'):
+            snapshot['recent_country_briefing']=json.loads(pd.Series(snapshot['recent_country_briefing']).to_json())
         if snapshot not in st.session_state['clues']:
             st.session_state['clues'].append(snapshot)
             st.success('Evidence pinned with its location, period, baseline, and uncertainty.')
@@ -368,10 +382,13 @@ with notebook:
             st.write(f'Trend: {clue["trend_mm_decade"]} mm/decade · {clue.get('inference_method','OLS')} p = {clue["p_value"]} · 95% CI: {clue["confidence_interval"]}')
             st.caption(f'Baseline {clue["baseline"]} · {clue["valid_years"]} complete years · α = {clue["alpha"]} · {clue["source"]}')
             st.write(clue['assessment'])
+            if clue.get('recent_country_explanation'):
+                st.markdown('**Pinned recent country briefing**')
+                st.write(clue['recent_country_explanation'])
             if clue['notes']:
                 st.text(clue['notes'])
             st.button('Remove this clue', key=f'remove_clue_{i}', on_click=lambda index=i: st.session_state['clues'].pop(index))
-        report.extend([f'## Clue {i+1:02d}', *[f'- {key.replace("_", " ")}: {value}' for key, value in clue.items() if key not in ['annual_data','chart_json']], ''])
+        report.extend([f'## Clue {i+1:02d}', *[f'- {key.replace("_", " ")}: {value}' for key, value in clue.items() if key not in ['annual_data','chart_json','recent_country_briefing']], ''])
     report.extend(['## Scientific limits', 'Raw OLS inference assumes independent residuals; autocorrelation can understate uncertainty. Country summaries use the pinned center-point or fractional-area weighting method on a 2.5° grid. Anomalies are not SPI. Statistical significance does not establish causation.', '',
                    'Data: https://psl.noaa.gov/data/gridded/data.gpcp.html', 'Boundaries: Natural Earth (public domain).'])
     st.download_button('Download the case report · Markdown', '\n'.join(report), file_name='saharawatch_case_report.md',
