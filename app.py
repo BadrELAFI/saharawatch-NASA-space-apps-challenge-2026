@@ -6,6 +6,7 @@ import pandas as pd
 import streamlit as st
 from saharawatch.data import (ROOT, RAW, VARIABLES, load_data, complete_years, grid_series,
                               select_period, boundaries, country_mask, regional_series)
+from saharawatch.trend_diagnostics import render_trend_diagnostics
 from saharawatch.drought import anomaly_statistics
 from saharawatch.drought_panel import render_drought_panel
 from saharawatch.analysis import trend, trend_grid, annual_anomalies, fdr_bh, monthly_anomalies
@@ -235,6 +236,7 @@ with explorer:
         st.caption(f'Relative trend: {fmt(result["relative"])} %/decade · Fitted change: {fmt(result["change"])} mm')
         st.caption(f'Lag-1 annual residual correlation: {fmt(result["lag1"],2)}. This diagnostic does not correct the p-value.')
         st.caption('OLS inference is exploratory and assumes independent residuals. Non-significance does not prove no change. Significance does not establish causality.')
+    render_trend_diagnostics(series,alpha,label)
     with st.container(border=True):
         st.markdown('### Exhibit B · Departures from the usual')
         standard = st.toggle('Standardized annual anomalies',key='standard')
@@ -372,7 +374,7 @@ with methods:
 
 **Trends.** SciPy ordinary least squares fits annual precipitation against calendar year. At least ten valid complete years are required. Slopes are reported in mm/decade; the two-sided p-value tests zero slope. The 95% slope interval uses Student's t with n−2 degrees of freedom. Relative slopes are withheld below a 10 mm/year mean. Fitted change is slope × elapsed years, not an endpoint observation difference.
 
-**Uncertainty.** OLS assumes independent residuals and may understate uncertainty when climate residuals are serially correlated. Lag-1 residual correlation is a diagnostic only; robust inference is not implemented. The significance map optionally uses Benjamini–Hochberg FDR across all finite cell p-values in the rectangle, including ocean. Hover p-values remain raw. FDR's usual guarantees rely on independence or appropriate positive dependence. Selected-location and country summaries report raw exploratory p-values.
+**Uncertainty.** OLS assumes independent residuals and may understate uncertainty when climate residuals are serially correlated. Lag-1 residual correlation is a diagnostic only; selected-series Newey–West HAC inference is available in Statistical trend diagnostics. HAC uses consecutive annual observations, a Bartlett kernel, small-sample correction, and Student-t inference. The map and notebook continue to report raw OLS inference. The significance map optionally uses Benjamini–Hochberg FDR across all finite cell p-values in the rectangle, including ocean. Hover p-values remain raw. FDR's usual guarantees rely on independence or appropriate positive dependence. Selected-location and country summaries report raw exploratory p-values.
 
 **Baselines.** Annual anomalies subtract the fixed baseline annual mean. Standardized anomalies divide by the baseline sample standard deviation (ddof=1); at least ten valid baseline years and positive variance are required. Monthly anomalies compare the same calendar month. Standardized anomalies are **not SPI**.
 
