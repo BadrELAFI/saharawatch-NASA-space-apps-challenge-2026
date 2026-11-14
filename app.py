@@ -6,6 +6,7 @@ import pandas as pd
 import streamlit as st
 from saharawatch.data import (ROOT, RAW, VARIABLES, load_data, complete_years, grid_series,
                               select_period, boundaries, country_mask, regional_series)
+from saharawatch.comparison import render_comparison
 from saharawatch.trend_diagnostics import render_trend_diagnostics
 from saharawatch.drought import anomaly_statistics
 from saharawatch.drought_panel import render_drought_panel
@@ -261,33 +262,7 @@ with deficits:
     render_drought_panel(whole_series,whole_monthly,label,start,end,bstart,bend,years)
 
 with comparison:
-    st.subheader('Cross-examine two landscapes')
-    st.caption(f'Shared analysis period {start}–{end} · shared baseline {bstart}–{bend}')
-    if len(countries) < 2:
-        st.info('Country boundaries are unavailable. Grid-cell exploration remains available.')
-    else:
-        ca,cb = st.columns(2)
-        first = ca.selectbox('First country',country_names,index=country_names.index('Morocco'),key='first_country')
-        second = cb.selectbox('Second country',country_names,index=country_names.index('Algeria'),key='compare_country')
-        normalize = st.toggle('Compare standardized anomalies',key='normalize_compare')
-        chart = go.Figure()
-        for name,col,color in [(first,ca,CYAN),(second,cb,AMBER)]:
-            cmask = cached_mask(annual.lat.values,annual.lon.values,countries[name])
-            try:
-                full = regional_series(annual,cmask)
-            except ValueError as exc:
-                st.warning(f'{name}: {exc}'); continue
-            s = full.sel(year=slice(start,end))
-            r = trend(s.year,s,alpha)
-            an,zz,_ = annual_anomalies(full,bstart,bend)
-            col.metric(f'{name} · mean annual rainfall',fmt(r['mean'])+' mm')
-            col.markdown(f'**{fmt(r["decade"])} mm/decade** · p = {fmt(r["p"],4)}')
-            col.caption(f'{r["status"]}. {end} anomaly: {fmt(float(an.sel(year=end)))} mm. {int(cmask.sum())} cell centers.')
-            plotted = zz.sel(year=s.year) if normalize else s
-            chart.add_trace(go.Scatter(x=s.year.values,y=plotted.values,name=name,mode='lines+markers',line=dict(color=color,width=2)))
-        chart.update_yaxes(title_text='Standardized anomaly (σ)' if normalize else 'Annual precipitation (mm)')
-        st.plotly_chart(style(chart,380),width='stretch',theme=None,key='comparison')
-        st.caption('Country masks use fixed center-point membership and cosine latitude weighting. The two slopes have not been tested for a statistically significant difference. Different climates can have very different absolute rainfall variability.')
+    render_comparison(annual,countries,start,end,bstart,bend,alpha)
 
 with guided:
     st.subheader('Choose your next case')

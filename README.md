@@ -29,7 +29,7 @@ The prepared dataset in this workspace covers **January 1979–October 2026**; c
 - Choose a grid cell by coordinates, or a country using a boundary mask. All 11 countries in the specification are included.
 - Change the analysis window, baseline, anomaly observation year, and significance threshold.
 - Inspect annual and monthly rainfall, a fitted annual trend, optional moving averages, seasonal climatology, and anomalies.
-- Compare two country series on shared axes, in rainfall units or standardized anomalies.
+- Compare two countries or two geographic grid cells on shared axes, in rainfall units or standardized anomalies. Each selection includes a historical chart, confidence interval, sample size, recent anomaly, and deterministic comparison of absolute and relative trend magnitudes. Download the summaries as CSV; differences in slope are not themselves significance-tested.
 - Open themed case files, inspect the methodology, and export the selected annual series as CSV.
 - Jump to the selected location’s driest year, trace its long-term trend, or challenge the evidence with the significance map.
 - Record a working hypothesis in the field notebook and compare it with the calculated trend, including inconclusive results.
@@ -114,6 +114,6 @@ The browser check verifies rendered plots, country and tab navigation, detective
 
 Phase 1 and Phase 2 are implemented. Phase 3 includes validated selected-series SPI-3/SPI-12, CSV export, and a Markdown report of pinned evidence; **temperature/MERRA-2 integration, Mann–Kendall tests, and AI-generated interpretation are not implemented**. Deterministic descriptions explain the actual calculations.
 
-Grid-cell selection uses dependable coordinate inputs; map-click selection is not implemented. Comparisons currently support country masks, not two arbitrary grid cells. Fractional country coverage, formal trend-difference testing, and public deployment also remain future work. CSV exports contain measurements and anomalies. Notebook reports capture pinned evidence and notes; they do not include chart images or the underlying full dataset.
+Grid-cell selection uses dependable coordinate inputs; map-click selection is not implemented. Fractional country coverage, formal trend-difference testing, and public deployment also remain future work. CSV exports contain measurements and anomalies. Notebook reports capture pinned evidence and notes; they do not include chart images or the underlying full dataset.
 
 For Streamlit Community Cloud, install the pinned requirements and prepare the source file in the deployment environment before launch. The app deliberately does not silently fetch missing data or substitute demo observations. Hosting has not been deployed or verified.
