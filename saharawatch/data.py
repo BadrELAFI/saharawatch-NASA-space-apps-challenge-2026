@@ -120,7 +120,7 @@ def regional_series(data, mask):
         raise ValueError('No GPCP cell centers inside this boundary. Select a grid cell instead.')
     weights = np.cos(np.deg2rad(data.lat)).broadcast_like(mask).where(mask, 0)
     result = (data.where(mask) * weights).sum(('lat', 'lon'), skipna=True) / weights.sum()
-    return result.where(data.where(mask).count(('lat', 'lon')) == n)
+    return result.where(data.where(mask).count(('lat', 'lon')) == n).assign_attrs(data.attrs)
 
 
 def grid_series(data, lat, lon):

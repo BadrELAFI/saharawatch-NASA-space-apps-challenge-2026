@@ -6,6 +6,8 @@ import pandas as pd
 import streamlit as st
 from saharawatch.data import (ROOT, RAW, VARIABLES, load_data, complete_years, grid_series,
                               select_period, boundaries, country_mask, regional_series)
+from saharawatch.drought import anomaly_statistics
+from saharawatch.drought_panel import render_drought_panel
 from saharawatch.analysis import trend, trend_grid, annual_anomalies, fdr_bh, monthly_anomalies
 from saharawatch.plots import map_figure, history_figure, anomaly_figure, style, CYAN, AMBER
 import plotly.graph_objects as go
@@ -76,7 +78,7 @@ countries = boundaries()
 country_names = sorted(countries)
 default_period = (2001,2024) if 2001 in years and 2024 in years else (years[0],years[-1])
 default_baseline = (2001,2020) if 2001 in years and 2020 in years else (years[0],years[-1])
-indicators = ['Mean annual rainfall','Linear trend','Relative trend','Annual anomaly','Standardized anomaly','Trend significance']
+indicators = ['Mean annual rainfall','Linear trend','Relative trend','Annual anomaly','Relative anomaly','Standardized anomaly','Trend significance']
 with st.sidebar:
     st.html('<div class="brand"><i class="brand-symbol"></i> Sahara<span>Watch</span></div><p class="eyebrow">Climate Detective Bureau</p>')
     st.divider()
@@ -97,7 +99,7 @@ with st.sidebar:
     st.selectbox('Environmental variable',list(VARIABLES),format_func=lambda k:VARIABLES[k]['label'],key='variable')
     indicator = st.selectbox('Map indicator',indicators,key='indicator')
     start,end = st.slider('Analysis period',years[0],years[-1],default_period,key='period')
-    with st.expander('Baseline & statistical settings',expanded=indicator in ['Annual anomaly','Standardized anomaly','Trend significance']):
+    with st.expander('Baseline & statistical settings',expanded=indicator in ['Annual anomaly','Relative anomaly','Standardized anomaly','Trend significance']):
         bstart,bend = st.slider('Reference baseline',years[0],years[-1],default_baseline,key='baseline')
         alpha = st.selectbox('Significance threshold α',[0.01,0.05,0.10],index=1,key='alpha')
         correction = st.radio('Map significance',['Benjamini–Hochberg FDR','Raw p-values'],key='correction')
@@ -140,7 +142,7 @@ case_titles = {'morocco': 'Is Morocco becoming drier?', 'compare': 'Across the b
                'anomaly': 'The dry-year files', 'trends': 'Follow the strongest trail'}
 active_case = case_titles.get(st.session_state.get('active_case'), 'An open investigation')
 st.html(f'<div class="case-strip"><b>CASE FILE / OPEN</b><span>{html.escape(active_case)}</span><span>{html.escape(label)} · {start}–{end}</span></div>')
-explorer,comparison,guided,notebook,methods = st.tabs(['01 / Evidence atlas','02 / Cross-examine','03 / Case files','04 / Field notebook','05 / The science'])
+explorer,comparison,guided,notebook,methods,deficits = st.tabs(['01 / Evidence atlas','02 / Cross-examine','03 / Case files','04 / Field notebook','05 / The science','06 / Rainfall deficits & SPI'])
 with explorer:
     st.caption('YOUR INVESTIGATION / Survey the scene → inspect a year → weigh the trend → pin your evidence')
     tool_a, tool_b, tool_c = st.columns(3)
@@ -161,16 +163,20 @@ with explorer:
         st.session_state.setdefault('anomaly_year', end)
         st.session_state['anomaly_year'] = max(start, min(end, st.session_state['anomaly_year']))
         anomaly_year = st.selectbox('Observation year',list(range(start,end+1)),
-                                    disabled=indicator not in ['Annual anomaly','Standardized anomaly'],key='anomaly_year')
+                                    disabled=indicator not in ['Annual anomaly','Relative anomaly','Standardized anomaly'],key='anomaly_year')
     pvalues = None
+    observed_grid = expected_grid = None
     diverging = indicator != 'Mean annual rainfall'
     significance = indicator == 'Trend significance'
     if indicator == 'Mean annual rainfall':
         values,units = window.mean('year'),'mm/year'
-    elif indicator in ['Annual anomaly','Standardized anomaly']:
-        grid_anomaly,grid_z,_ = annual_anomalies(annual,bstart,bend)
-        values = (grid_anomaly if indicator == 'Annual anomaly' else grid_z).sel(year=anomaly_year)
-        units = 'mm' if indicator == 'Annual anomaly' else 'σ'
+    elif indicator in ['Annual anomaly','Relative anomaly','Standardized anomaly']:
+        grid_departures = anomaly_statistics(annual,bstart,bend)
+        grid_metric = {'Annual anomaly':'anomaly','Relative anomaly':'relative_anomaly','Standardized anomaly':'standardized_anomaly'}[indicator]
+        values = grid_departures[grid_metric].sel(year=anomaly_year)
+        observed_grid=annual.sel(year=anomaly_year)
+        expected_grid=grid_departures.expected
+        units = {'Annual anomaly':'mm','Relative anomaly':'%','Standardized anomaly':'σ'}[indicator]
     else:
         trends = cached_trends(file_stamp,start,end,window)
         pvalues = trends.sel(stat='p',drop=True)
@@ -183,20 +189,22 @@ with explorer:
         else:
             values,units = trends.sel(stat='decade',drop=True),'mm/decade'
     period_text = f'{start}–{end}'
-    if indicator in ['Annual anomaly','Standardized anomaly']:
+    if indicator in ['Annual anomaly','Relative anomaly','Standardized anomaly']:
         period_text = f'{anomaly_year} vs. {bstart}–{bend} baseline'
     figure = map_figure(values,indicator,units,period_text,pvalues=pvalues,selected=selected,
-                        feature=feature,diverging=diverging,significance=significance)
+                        feature=feature,diverging=diverging,significance=significance,observed=observed_grid,expected=expected_grid)
     st.plotly_chart(figure,width='stretch',theme=None,key='map',config={'scrollZoom':True,'displaylogo':False})
     if significance:
         st.caption(f'{correction} at α = {alpha}. Terracotta: significant decrease · parchment: no significant trend detected · green: significant increase. Missing cells are unfilled. Hover shows raw p-values; FDR tests all valid cells in the study rectangle, including ocean.')
     else:
         st.caption('Pan, zoom, and hover to investigate. Every square is an actual 2.5° GPCP cell, including ocean; no spatial interpolation. Unfilled cells have insufficient data. Select coordinates or a country in the sidebar.')
+    if indicator == 'Relative anomaly':
+        st.caption('Relative anomalies are withheld where baseline mean annual rainfall is below 10 mm/year.')
     if indicator == 'Relative trend':
         st.caption('Relative trends are withheld where mean annual rainfall is below 10 mm/year.')
     if indicator == 'Standardized anomaly':
         st.caption('Annual standardized anomaly = (observed − baseline mean) / baseline sample standard deviation. This is not SPI.')
-    if indicator in ['Annual anomaly', 'Standardized anomaly']:
+    if indicator in ['Annual anomaly', 'Relative anomaly', 'Standardized anomaly']:
         observed_mm = float(whole_series.sel(year=anomaly_year))
         departure_mm = float(anomaly.sel(year=anomaly_year))
         st.html(f'<div class="clue-card"><p class="eyebrow">Year under investigation / {anomaly_year}</p><h3>{html.escape(label)}</h3><p>Recorded rainfall: <b>{fmt(observed_mm)} mm</b> · Departure from the {bstart}–{bend} baseline: <b>{fmt(departure_mm)} mm</b>. One year is a clue; the full timeline is needed to investigate a trend.</p></div>')
@@ -246,6 +254,9 @@ with explorer:
     export = pd.DataFrame({'year':series.year.values,'precipitation_mm':series.values,
                             'anomaly_mm':anomaly.sel(year=series.year).values,'standardized_anomaly':z.sel(year=series.year).values})
     st.download_button('Take the evidence · Annual series CSV',export.to_csv(index=False),file_name='saharawatch_annual.csv',mime='text/csv')
+
+with deficits:
+    render_drought_panel(whole_series,whole_monthly,label,start,end,bstart,bend,years)
 
 with comparison:
     st.subheader('Cross-examine two landscapes')
@@ -364,6 +375,8 @@ with methods:
 **Uncertainty.** OLS assumes independent residuals and may understate uncertainty when climate residuals are serially correlated. Lag-1 residual correlation is a diagnostic only; robust inference is not implemented. The significance map optionally uses Benjamini–Hochberg FDR across all finite cell p-values in the rectangle, including ocean. Hover p-values remain raw. FDR's usual guarantees rely on independence or appropriate positive dependence. Selected-location and country summaries report raw exploratory p-values.
 
 **Baselines.** Annual anomalies subtract the fixed baseline annual mean. Standardized anomalies divide by the baseline sample standard deviation (ddof=1); at least ten valid baseline years and positive variance are required. Monthly anomalies compare the same calendar month. Standardized anomalies are **not SPI**.
+
+**SPI-3 / SPI-12.** The Rainfall deficits & SPI tab uses the pinned climate-indices 3.1.0 gamma implementation on accumulated monthly rainfall, with calendar-month fitting and calibration-period zero probability. Its separate default calibration is 1981–2010; at least 30 calibration years are required. Each calendar month needs ≥30 valid and ≥20 positive accumulated observations with nonzero positive-rainfall variance. Gamma fits with a missing or <0.05 library KS diagnostic are withheld as a conservative reliability screen, not a formal parameter-adjusted goodness-of-fit test. Scores are clipped by the library to ±3.09. Missing months invalidate rolling windows. SPI is fitted only on request for the selected series, not for the whole map. Results are validated against the reference library and an independent gamma-CDF calculation.
 
 **Interpretation.** This is not a forecast. Rainfall deficits relate to meteorological drought but do not fully describe agricultural or hydrological drought. Coarse GPCP cells cannot support city or field-level claims. A significant trend does not establish cause, and a nonsignificant result does not prove no change.''')
     st.info(metadata['attributes'].get('data_comment','Source provisional status not specified.'))

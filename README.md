@@ -25,7 +25,7 @@ The prepared dataset in this workspace covers **January 1979–October 2026**; c
 ## Explore
 
 - Pan, zoom, and hover over actual **2.5° cells** in the MENA precipitation map. Geographic context uses local boundaries rather than requiring remote map tiles.
-- Switch between annual mean, linear trend, relative trend, annual anomaly, standardized anomaly, and trend significance.
+- Switch between annual mean, linear trend, relative trend, annual anomaly, relative anomaly, standardized anomaly, and trend significance.
 - Choose a grid cell by coordinates, or a country using a boundary mask. All 11 countries in the specification are included.
 - Change the analysis window, baseline, anomaly observation year, and significance threshold.
 - Inspect annual and monthly rainfall, a fitted annual trend, optional moving averages, seasonal climatology, and anomalies.
@@ -79,6 +79,18 @@ The dashboard caches validated data in memory and keys it by source-file modific
 
 **Uncertainty.** OLS assumes independent residuals and may understate uncertainty for serially correlated precipitation records. A lag-1 annual residual correlation is shown when defined; it is a diagnostic, not a correction. Nonsignificance does not establish no change, statistical significance does not establish causation, and visual comparison does not test whether two country slopes differ significantly. Rainfall deficits describe only one aspect of drought. Coarse cells cannot support city or farm-level claims.
 
+## Features 3 and 4: rainfall deficits and SPI
+
+Open **06 / Rainfall deficits & SPI** for annual or monthly absolute, relative, and standardized precipitation anomalies, configurable negative-anomaly thresholds, and CSV exports. The default anomaly baseline remains **2001–2020** and can be changed in the sidebar. Monthly comparisons use the same calendar month. Relative departures are withheld below an expected **1 mm/month** or **10 mm/year**; all anomaly calculations need at least ten valid baseline observations per group. A frequency summary counts standardized anomalies at or below the selected negative threshold, excluding missing observations from its denominator. It is labeled **Frequency of severe negative precipitation anomalies**, not official drought frequency.
+
+Enable **validated gamma SPI** for the selected grid-cell or country series. Choose **SPI-3** or **SPI-12** and an independent calibration period (default **1981–2010**) spanning at least 30 years. This leaves the anomaly reference period unchanged. The pinned [climate-indices 3.1.0 implementation](https://climate-indices.readthedocs.io/en/stable/algorithm-reference.html) fits a two-parameter gamma distribution to accumulated monthly rainfall separately by calendar month, accounts for the calibration-period probability of zero accumulation using its classic convention, and transforms the fitted cumulative probability with the inverse normal CDF. The library clips scores to ±3.09. SPI is not an ordinary anomaly z-score.
+
+Each calendar month must have at least **30 valid accumulated calibration observations**, **20 positive accumulations**, and nonzero variability among positive accumulations. Results are also withheld where the library's gamma-fit KS diagnostic is missing or below 0.05. This is a conservative reliability screen; its p-value is not a formal goodness-of-fit test adjusted for parameter estimation. Fitting warnings are shown. Unsupported months stay missing, and insufficient calibration periods show an explanation rather than a substitute index.
+
+Rolling accumulations retain observations before the analysis period. Missing calendar months are made explicit as missing, invalidating all affected rolling windows. SPI is computed only when enabled for the selected series and cached by observations, dates, scale, and calibration years. It does not fit every map cell at startup. The validated tests compare supported SPI observations against both the reference library and an independent gamma-CDF calculation, including zero precipitation and temporal gaps. Zero-inflated arid climates can limit SPI interpretation even with these checks.
+
+SPI export includes accumulation, score, scale, and calibration years. To exercise the new browser controls and CSV downloads with the app running, use `python scripts/browser_drought_smoke.py` after installing the development requirements.
+
 ## Test and verify
 
 ```bash
@@ -100,7 +112,7 @@ The browser check verifies rendered plots, country and tab navigation, detective
 
 ## Incomplete and future work
 
-Phase 1 and Phase 2 are implemented. Phase 3 includes CSV export and a Markdown report of pinned evidence; **formal SPI, temperature/MERRA-2 integration, robust autocorrelation-adjusted inference, Theil–Sen/Mann–Kendall tests, and AI-generated interpretation are not implemented**. Deterministic descriptions explain the actual calculations.
+Phase 1 and Phase 2 are implemented. Phase 3 includes validated selected-series SPI-3/SPI-12, CSV export, and a Markdown report of pinned evidence; **temperature/MERRA-2 integration, robust autocorrelation-adjusted inference, Theil–Sen/Mann–Kendall tests, and AI-generated interpretation are not implemented**. Deterministic descriptions explain the actual calculations.
 
 Grid-cell selection uses dependable coordinate inputs; map-click selection is not implemented. Comparisons currently support country masks, not two arbitrary grid cells. Fractional country coverage, formal trend-difference testing, and public deployment also remain future work. CSV exports contain measurements and anomalies. Notebook reports capture pinned evidence and notes; they do not include chart images or the underlying full dataset.
 

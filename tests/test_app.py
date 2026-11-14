@@ -94,3 +94,27 @@ def test_hypothesis_distinguishes_opposing_and_inconclusive_evidence():
     at.button(key='pin_evidence').click().run(timeout=30)
     assert at.session_state['clues'][1]['assessment'].startswith('Inconclusive:')
     assert not at.exception
+
+
+def test_deficit_views_and_spi_controls():
+    at=AppTest.from_file(ROOT / 'app.py').run(timeout=30)
+    at.selectbox(key='indicator').set_value('Relative anomaly').run(timeout=30)
+    assert not at.exception
+    at.radio(key='deficit_resolution').set_value('Monthly').run(timeout=30)
+    at.selectbox(key='deficit_metric').set_value('Standardized anomaly (σ)').run(timeout=30)
+    assert not at.exception
+    at.checkbox(key='enable_spi').set_value(True).run(timeout=30)
+    assert not at.exception
+    assert 'spi_chart' in [e.key for e in at.get('plotly_chart')]
+    at.selectbox(key='spi_scale').set_value(12).run(timeout=30)
+    assert not at.exception
+    assert 'spi_chart' in [e.key for e in at.get('plotly_chart')]
+    at.radio(key='mode').set_value('Country aggregation').run(timeout=30)
+    assert not at.exception
+    assert 'spi_chart' in [e.key for e in at.get('plotly_chart')]
+    at.slider(key='spi_calibration').set_range(2001,2020).run(timeout=30)
+    assert not at.exception
+    assert any('choose at least 30' in e.value for e in at.info)
+    assert 'spi_chart' not in [e.key for e in at.get('plotly_chart')]
+    # Anomalies still render with the shorter, independent SPI calibration window.
+    assert 'departure_chart' in [e.key for e in at.get('plotly_chart')]

@@ -35,7 +35,7 @@ def cell_geojson(data):
     return dict(type='FeatureCollection', features=features), np.asarray(centers)
 
 
-def map_figure(values, title, units, period, pvalues=None, selected=None, feature=None, diverging=False, significance=False):
+def map_figure(values, title, units, period, pvalues=None, selected=None, feature=None, diverging=False, significance=False, observed=None, expected=None):
     values = values.transpose('lat', 'lon')
     geojson, centers = cell_geojson(values)
     z = values.values.ravel()
@@ -46,6 +46,8 @@ def map_figure(values, title, units, period, pvalues=None, selected=None, featur
         lo, hi = -1, 1
     p = np.full(z.shape, np.nan) if pvalues is None else pvalues.transpose('lat','lon').values.ravel()
     custom = np.column_stack((centers, p))
+    if observed is not None and expected is not None:
+        custom=np.column_stack((custom,observed.transpose('lat','lon').values.ravel(),expected.transpose('lat','lon').values.ravel()))
     fig = go.Figure(go.Choroplethmap(
         geojson=geojson, locations=[f['id'] for f in geojson['features']], z=z,
         customdata=custom, zmin=lo, zmax=hi, colorscale=DIVERGING if diverging else RAIN,
@@ -53,7 +55,8 @@ def map_figure(values, title, units, period, pvalues=None, selected=None, featur
         colorbar=dict(title=dict(text=units, side='right'), thickness=9, len=.75, tickfont_size=10),
         hovertemplate=('<b>%{customdata[0]:.2f}° N, %{customdata[1]:.2f}° E</b><br>'
                        +title+': %{z:.2f} '+units+'<br>'+period+
-                       ('<br>Raw OLS p = %{customdata[2]:.4f}' if pvalues is not None else '')+'<extra></extra>'),
+                       ('<br>Raw OLS p = %{customdata[2]:.4f}' if pvalues is not None else '')+
+                       ('<br>Observed: %{customdata[3]:.1f} mm<br>Baseline: %{customdata[4]:.1f} mm' if observed is not None else '')+'<extra></extra>'),
         name=title))
     if significance:
         fig.data[0].colorscale = [[0,'#b15e3d'],[.2499,'#b15e3d'],[.25,'#d4c5a5'],[.7499,'#d4c5a5'],[.75,'#41694e'],[1,'#41694e']]
@@ -123,3 +126,17 @@ def anomaly_figure(series, standardized=False, observed=None, baseline=None):
     fig.add_hline(y=0,line_color='#8b784f',line_width=1)
     fig.update_yaxes(title_text='Standardized anomaly (σ)' if standardized else 'Precipitation anomaly (mm)')
     return style(fig,280)
+
+
+def departure_figure(departures, metric='anomaly', monthly=False):
+    """Monthly or annual departures with measured and reference values on hover."""
+    x=departures.time.values if monthly else departures.year.values
+    units={'anomaly':'mm','relative_anomaly':'%','standardized_anomaly':'σ'}[metric]
+    y=departures[metric].values
+    custom=np.column_stack((departures.observed.values,np.broadcast_to(departures.expected.values,y.shape)))
+    fig=go.Figure(go.Bar(x=x,y=y,customdata=custom,marker_color=np.where(y<0,AMBER,CYAN),
+        hovertemplate='%{x}<br>Observed: %{customdata[0]:.1f} mm<br>Baseline: %{customdata[1]:.1f} mm<br>Departure: %{y:.2f} '+units+'<extra></extra>'))
+    fig.add_hline(y=0,line_color='#8b784f',line_width=1)
+    fig.update_yaxes(title_text={'anomaly':'Precipitation anomaly (mm)','relative_anomaly':'Relative precipitation anomaly (%)',
+                                 'standardized_anomaly':'Standardized precipitation anomaly (σ)'}[metric])
+    return style(fig,300)
