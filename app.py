@@ -10,6 +10,7 @@ from saharawatch.briefing import render_country_briefing, assessment_text
 from saharawatch.inference import METHODS, analyze_trend, inference_grid
 from saharawatch.temperature import render_temperature
 from saharawatch.time_machine import render_time_machine
+from saharawatch.evidence_board import render_evidence_board, clue_id, RELATIONS
 from saharawatch.reports import build_report_archive
 from saharawatch.guided import render_live_investigation
 from saharawatch.comparison import render_comparison
@@ -379,6 +380,7 @@ with notebook:
     st.markdown(f'### Pinned evidence · {len(clues):02d}')
     if not clues:
         st.info('Your notebook is empty. Inspect the atlas, then pin your first finding here.')
+    board = render_evidence_board(clues)
     report = ['# SaharaWatch / Climate detective case report', '',
               'Exploratory historical rainfall analysis. Not a drought forecast or climate attribution.', '']
     for i, clue in enumerate(clues):
@@ -394,6 +396,12 @@ with notebook:
                 st.text(clue['notes'])
             st.button('Remove this clue', key=f'remove_clue_{i}', on_click=lambda index=i: st.session_state['clues'].pop(index))
         report.extend([f'## Clue {i+1:02d}', *[f'- {key.replace("_", " ")}: {value}' for key, value in clue.items() if key not in ['annual_data','chart_json','recent_country_briefing']], ''])
+    if board['connections']:
+        numbers = {clue_id(clue): index+1 for index, clue in enumerate(clues)}
+        report.extend(['## Evidence relationships', 'User interpretations, not statistical tests or causal findings.', ''])
+        report.extend(f'- Clue {numbers[edge["source"]]:02d} → Clue {numbers[edge["target"]]:02d}: {RELATIONS[edge["relation"]]}'
+                      for edge in board['connections'])
+        report.append('')
     report.extend(['## Scientific limits', 'Raw OLS inference assumes independent residuals; autocorrelation can understate uncertainty. Country summaries use the pinned center-point or fractional-area weighting method on a 2.5° grid. Anomalies are not SPI. Statistical significance does not establish causation.', '',
                    'Data: https://psl.noaa.gov/data/gridded/data.gpcp.html', 'Boundaries: Natural Earth (public domain).'])
     st.download_button('Download the case report · Markdown', '\n'.join(report), file_name='saharawatch_case_report.md',

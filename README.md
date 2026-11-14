@@ -47,6 +47,7 @@ Precipitation deficits are evidence of meteorological dryness, not a complete as
 - Jump to the selected location’s driest year, trace its long-term trend, or challenge the evidence with the significance map.
 - Record a working hypothesis in the field notebook and compare it with the calculated trend, including inconclusive results.
 - Pin evidence snapshots with their location, analysis period, baseline, source, uncertainty, and field notes. Remove clues or download a Markdown case report. The notebook is session-only; download it before closing or refreshing the session. Starting a fresh investigation clears it.
+- Arrange pinned snapshots on the **connected evidence board** in Field notebook. Drag card headings with a mouse or touch; red pushpins lock cards in place. Choose **Supports**, **Challenges**, or **Provides context**, then press **Connect** on two cards to add a labeled red string. Connections record your interpretation, not causation or statistical significance. Positions, locks, and links survive dashboard interactions within the session; removing a clue removes its connections without moving the others. Download the board as JSON to retain the layout, links, and original evidence; Markdown reports also include the relationships. Keyboard users can focus a card heading, use arrow keys to move it, and press Space to toggle its pin. The board scrolls within its frame on small screens.
 
 The interface combines a Victorian detective’s casebook with a drought field station: parchment surfaces, forest-green ink, brass accents, terracotta deficits, a magnifying-glass illustration, and local topographic-style decoration. All chart palettes use the same earth tones; decorative elements do not represent measured geography.
 
@@ -59,6 +60,12 @@ The dashboard uses Streamlit, Plotly, xarray, NumPy, Pandas, SciPy, netCDF4, and
 Play through annual rainfall anomaly maps with a synchronized timeline, a year scrubber, and fixed scales. Open it from **01 / Evidence atlas → Open the rainfall time machine**.
 
 ![Rainfall time machine showing the MENA anomaly map, synchronized rainfall timeline, and playback controls](assets/rainfall-history.png)
+
+### Connected evidence board
+
+Drag evidence cards across the cork board, lock them with red pushpins, and connect findings with labeled red strings. Find it in **04 / Field notebook** after pinning evidence.
+
+![Connected evidence board showing draggable rainfall evidence cards, a red pushpin, and a labeled red string](assets/evidence-board.png)
 
 ## Data and provenance
 
@@ -128,6 +135,7 @@ pip install -r requirements-dev.txt
 playwright install chromium
 python scripts/browser_smoke.py
 python scripts/browser_time_machine_smoke.py
+python scripts/browser_board_smoke.py
 ```
 
 The browser check verifies rendered plots, country and tab navigation, detective controls, note-taking, report downloads, browser errors, and a 390px mobile viewport. Set `SAHARAWATCH_TEST_URL` to test a local server on another port. It saves screenshots in `assets/`.
