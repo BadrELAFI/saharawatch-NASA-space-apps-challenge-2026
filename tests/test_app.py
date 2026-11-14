@@ -52,3 +52,45 @@ def test_missing_dataset_gives_actionable_error(tmp_path):
         at.run(timeout=30)
     assert not at.exception
     assert any('prepare_data.py' in e.value for e in at.error)
+
+
+def test_detective_tools_and_notebook_preserve_evidence_context():
+    at = AppTest.from_file(ROOT / 'app.py').run(timeout=30)
+    at.button(key='inspect_driest').click().run(timeout=30)
+    assert not at.exception
+    assert at.selectbox(key='indicator').value == 'Annual anomaly'
+    from saharawatch.data import load_data, grid_series
+    import numpy as np
+    _, annual, _ = load_data()
+    selected = grid_series(annual.sel(year=slice(2001, 2024)), 31.25, -6.25)
+    expected_year = int(selected.year.values[np.argmin(selected.values)])
+    assert at.selectbox(key='anomaly_year').value == expected_year
+    at.button(key='challenge_evidence').click().run(timeout=30)
+    assert at.selectbox(key='indicator').value == 'Trend significance'
+    at.button(key='pin_evidence').click().run(timeout=30)
+    assert not at.exception
+    clue = dict(at.session_state['clues'][0])
+    assert clue['period'] == '2001–2024'
+    assert clue['baseline'] == '2001–2020'
+    assert clue['observation_year'] == expected_year
+    at.button(key='pin_evidence').click().run(timeout=30)
+    assert len(at.session_state['clues']) == 1
+    at.slider(key='period').set_range(1991, 2020).run(timeout=30)
+    assert at.session_state['clues'][0] == clue
+    at.button(key='pin_evidence').click().run(timeout=30)
+    assert len(at.session_state['clues']) == 2
+    at.button(key='remove_clue_0').click().run(timeout=30)
+    assert len(at.session_state['clues']) == 1
+    assert at.session_state['clues'][0]['period'] == '1991–2020'
+    assert not at.exception
+
+
+def test_hypothesis_distinguishes_opposing_and_inconclusive_evidence():
+    at = AppTest.from_file(ROOT / 'app.py').run(timeout=30)
+    at.radio(key='hypothesis').set_value('Rainfall is increasing').run(timeout=30)
+    at.button(key='pin_evidence').click().run(timeout=30)
+    assert 'opposite direction' in at.session_state['clues'][0]['assessment']
+    at.selectbox(key='alpha').set_value(0.01).run(timeout=30)
+    at.button(key='pin_evidence').click().run(timeout=30)
+    assert at.session_state['clues'][1]['assessment'].startswith('Inconclusive:')
+    assert not at.exception

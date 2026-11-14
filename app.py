@@ -10,7 +10,7 @@ from saharawatch.analysis import trend, trend_grid, annual_anomalies, fdr_bh, mo
 from saharawatch.plots import map_figure, history_figure, anomaly_figure, style, CYAN, AMBER
 import plotly.graph_objects as go
 
-st.set_page_config(page_title='SaharaWatch · MENA Climate Intelligence',page_icon='◉',layout='wide')
+st.set_page_config(page_title='SaharaWatch · The Climate Detective Bureau',page_icon='🔎',layout='wide')
 st.html(f'<style>{(ROOT / "assets/styles.css").read_text()}</style>')
 
 
@@ -41,7 +41,14 @@ def reset():
         del st.session_state[key]
 
 
+def set_lens(indicator, year=None):
+    st.session_state['indicator'] = indicator
+    if year is not None:
+        st.session_state['anomaly_year'] = int(year)
+
+
 def preset(name):
+    st.session_state['active_case'] = name
     st.session_state.update(mode='Country aggregation',country='Morocco',first_country='Morocco',period=default_period)
     if name == 'morocco':
         st.session_state['indicator']='Linear trend'
@@ -71,9 +78,9 @@ default_period = (2001,2024) if 2001 in years and 2024 in years else (years[0],y
 default_baseline = (2001,2020) if 2001 in years and 2020 in years else (years[0],years[-1])
 indicators = ['Mean annual rainfall','Linear trend','Relative trend','Annual anomaly','Standardized anomaly','Trend significance']
 with st.sidebar:
-    st.html('<div class="brand"><i class="brand-symbol"></i> Sahara<span>Watch</span></div><p class="eyebrow">Earth observation / MENA</p>')
+    st.html('<div class="brand"><i class="brand-symbol"></i> Sahara<span>Watch</span></div><p class="eyebrow">Climate Detective Bureau</p>')
     st.divider()
-    st.caption('01 / LOCATION')
+    st.caption('01 / MARK THE SCENE')
     mode = st.radio('Selection mode',['Grid cell','Country aggregation'] if countries else ['Grid cell'],key='mode',horizontal=True)
     feature = None
     selected = None
@@ -86,7 +93,7 @@ with st.sidebar:
         lat = st.number_input('Latitude (° N)',min_value=10.,max_value=43.,value=31.25,step=2.5,key='lat')
         lon = st.number_input('Longitude (° E)',min_value=-18.,max_value=63.,value=-6.25,step=2.5,key='lon')
     st.divider()
-    st.caption('02 / ANALYSIS')
+    st.caption('02 / CHOOSE YOUR LENS')
     st.selectbox('Environmental variable',list(VARIABLES),format_func=lambda k:VARIABLES[k]['label'],key='variable')
     indicator = st.selectbox('Map indicator',indicators,key='indicator')
     start,end = st.slider('Analysis period',years[0],years[-1],default_period,key='period')
@@ -95,13 +102,18 @@ with st.sidebar:
         alpha = st.selectbox('Significance threshold α',[0.01,0.05,0.10],index=1,key='alpha')
         correction = st.radio('Map significance',['Benjamini–Hochberg FDR','Raw p-values'],key='correction')
         st.caption('95% slope intervals remain fixed. Baselines and trends each require ≥10 complete years.')
-    st.button('Reset exploration',on_click=reset,width='stretch')
+    st.button('Start a fresh investigation',on_click=reset,width='stretch')
     st.divider()
     st.caption(f'AVAILABLE RECORD\n\n{metadata["start"][:7]} → {metadata["end"][:7]}\n\nAnnual analysis excludes incomplete years.')
     st.markdown('[Dataset & attribution ↗](https://psl.noaa.gov/data/gridded/data.gpcp.html)')
 
-st.html('<p class="eyebrow">Historical climate observatory</p><h1>Follow the rainfall. Find the change.</h1><p class="subtitle">Earth System Trend Intelligence for MENA.</p>')
-st.html(f'<span class="source-pill">● GPCP {metadata["version"]} / NOAA PSL</span><span class="source-pill">{start} — {end}</span><span class="source-pill">2.5° × 2.5° · Monthly observations</span>')
+st.html("""<section class="hero">
+<div><p class="eyebrow">SaharaWatch / The Climate Detective Bureau</p>
+<h1>The curious case<br>of the <em>missing rain.</em></h1>
+<p class="subtitle">Every landscape leaves a clue. Trace the rainfall, question the patterns, and build your case from decades of Earth observations.</p></div>
+<div class="hero-art" aria-hidden="true"><div class="stamp">FIELD OFFICE<br>MENA · EST. 1979</div>
+<div class="detective-lens"><span class="lens-drop"></span><span class="lens-dunes"></span></div><span class="coordinates">18° W — 63° E / 10° N — 43° N<br>FOLLOW THE EVIDENCE.</span></div></section>""")
+st.html(f'<span class="source-pill">EVIDENCE SOURCE · GPCP {metadata["version"]} / NOAA PSL</span><span class="source-pill">{start} — {end}</span><span class="source-pill">2.5° × 2.5° · Monthly observations</span>')
 try:
     window = select_period(annual,start,end)
 except ValueError as exc:
@@ -124,14 +136,31 @@ try:
 except ValueError as exc:
     st.warning(str(exc)); st.stop()
 
-explorer,comparison,guided,methods = st.tabs(['Precipitation explorer','Regional comparison','Explore a Climate Mystery','Data & methodology'])
+case_titles = {'morocco': 'Is Morocco becoming drier?', 'compare': 'Across the border',
+               'anomaly': 'The dry-year files', 'trends': 'Follow the strongest trail'}
+active_case = case_titles.get(st.session_state.get('active_case'), 'An open investigation')
+st.html(f'<div class="case-strip"><b>CASE FILE / OPEN</b><span>{html.escape(active_case)}</span><span>{html.escape(label)} · {start}–{end}</span></div>')
+explorer,comparison,guided,notebook,methods = st.tabs(['01 / Evidence atlas','02 / Cross-examine','03 / Case files','04 / Field notebook','05 / The science'])
 with explorer:
+    st.caption('YOUR INVESTIGATION / Survey the scene → inspect a year → weigh the trend → pin your evidence')
+    tool_a, tool_b, tool_c = st.columns(3)
+    valid_series = series.where(np.isfinite(series), drop=True)
+    driest_year = int(valid_series.idxmin('year')) if valid_series.size else None
+    tool_a.button('⌕ Inspect the driest year', key='inspect_driest', width='stretch',
+                  disabled=driest_year is None, on_click=set_lens, args=('Annual anomaly', driest_year),
+                  help='Find the lowest annual rainfall in the current location and period; inspect its anomaly map.')
+    tool_b.button('↗ Trace the long-term trend', key='trace_trend', width='stretch',
+                  on_click=set_lens, args=('Linear trend',))
+    tool_c.button('⚖ Challenge the evidence', key='challenge_evidence', width='stretch',
+                  on_click=set_lens, args=('Trend significance',))
     titlecol,controlcol = st.columns([3,1])
     with titlecol:
-        st.subheader('The MENA precipitation atlas')
+        st.subheader('The evidence atlas')
         st.caption(f'{indicator.upper()} / {start}–{end}')
     with controlcol:
-        anomaly_year = st.selectbox('Observation year',list(range(start,end+1)),index=end-start,
+        st.session_state.setdefault('anomaly_year', end)
+        st.session_state['anomaly_year'] = max(start, min(end, st.session_state['anomaly_year']))
+        anomaly_year = st.selectbox('Observation year',list(range(start,end+1)),
                                     disabled=indicator not in ['Annual anomaly','Standardized anomaly'],key='anomaly_year')
     pvalues = None
     diverging = indicator != 'Mean annual rainfall'
@@ -160,13 +189,17 @@ with explorer:
                         feature=feature,diverging=diverging,significance=significance)
     st.plotly_chart(figure,width='stretch',theme=None,key='map',config={'scrollZoom':True,'displaylogo':False})
     if significance:
-        st.caption(f'{correction} at α = {alpha}. Orange: significant decrease · dark: no significant trend detected · teal: significant increase. Missing cells are unfilled. Hover shows raw p-values; FDR tests all valid cells in the study rectangle, including ocean.')
+        st.caption(f'{correction} at α = {alpha}. Terracotta: significant decrease · parchment: no significant trend detected · green: significant increase. Missing cells are unfilled. Hover shows raw p-values; FDR tests all valid cells in the study rectangle, including ocean.')
     else:
         st.caption('Pan, zoom, and hover to investigate. Every square is an actual 2.5° GPCP cell, including ocean; no spatial interpolation. Unfilled cells have insufficient data. Select coordinates or a country in the sidebar.')
     if indicator == 'Relative trend':
         st.caption('Relative trends are withheld where mean annual rainfall is below 10 mm/year.')
     if indicator == 'Standardized anomaly':
         st.caption('Annual standardized anomaly = (observed − baseline mean) / baseline sample standard deviation. This is not SPI.')
+    if indicator in ['Annual anomaly', 'Standardized anomaly']:
+        observed_mm = float(whole_series.sel(year=anomaly_year))
+        departure_mm = float(anomaly.sel(year=anomaly_year))
+        st.html(f'<div class="clue-card"><p class="eyebrow">Year under investigation / {anomaly_year}</p><h3>{html.escape(label)}</h3><p>Recorded rainfall: <b>{fmt(observed_mm)} mm</b> · Departure from the {bstart}–{bend} baseline: <b>{fmt(departure_mm)} mm</b>. One year is a clue; the full timeline is needed to investigate a trend.</p></div>')
     st.markdown(f'### {label}')
     if mode == 'Country aggregation':
         st.caption('Approximate national series: Natural Earth center-point mask with cosine latitude weights. Boundary cells are not fractionally allocated; very small countries may contain only one cell. Boundaries are descriptive and do not imply endorsement.')
@@ -178,7 +211,7 @@ with explorer:
     st.write('')
     left,right = st.columns([2.3,1])
     with left:
-        st.markdown('### Rainfall through time')
+        st.markdown('### Exhibit A · The rainfall timeline')
         view = st.radio('Time resolution',['Annual','Monthly'],horizontal=True,key='resolution')
         moving = st.checkbox('Show moving average',key='moving')
         displayed = whole_monthly.sel(time=slice(f'{start}-01-01',f'{end}-12-31')) if view == 'Monthly' else series
@@ -186,7 +219,7 @@ with explorer:
                         width='stretch',theme=None,key='history')
         st.caption(f'Annual totals require 12 valid months. Baseline: {bstart}–{bend}. Monthly totals preserve seasonality; annual OLS statistics above do not change with chart resolution.')
     with right:
-        st.markdown('### Reading the evidence')
+        st.markdown('### The evidence speaks')
         st.html(f'<div class="insight"><b>{html.escape(result["status"])}</b><br><br>Over {start}–{end}, the fitted annual rainfall trend is <b>{fmt(result["decade"])} mm per decade</b> with a raw OLS p-value of <b>{fmt(result["p"],4)}</b> at α = {alpha}.</div>')
         st.write('')
         st.caption(f'95% slope interval: {fmt(result["low"])} to {fmt(result["high"])} mm/decade')
@@ -195,10 +228,10 @@ with explorer:
         st.caption(f'Lag-1 annual residual correlation: {fmt(result["lag1"],2)}. This diagnostic does not correct the p-value.')
         st.caption('OLS inference is exploratory and assumes independent residuals. Non-significance does not prove no change. Significance does not establish causality.')
     with st.container(border=True):
-        st.markdown('### Wet years. Dry years. A consistent reference.')
+        st.markdown('### Exhibit B · Departures from the usual')
         standard = st.toggle('Standardized annual anomalies',key='standard')
         st.plotly_chart(anomaly_figure((z if standard else anomaly).sel(year=slice(start,end)),standard,series,baseline_mean),width='stretch',theme=None,key='anomalies')
-        st.caption(f'Orange: below the {bstart}–{bend} baseline. Teal: above baseline. Standardized anomalies use sample standard deviation and require at least 10 baseline years with nonzero variance. These are precipitation anomalies, not a formal drought index or SPI.')
+        st.caption(f'Terracotta: below the {bstart}–{bend} baseline. Green: above baseline. Standardized anomalies use sample standard deviation and require at least 10 baseline years with nonzero variance. These are precipitation anomalies, not a formal drought index or SPI.')
     with st.expander('Monthly seasonality and anomalies'):
         seasonal = whole_monthly.sel(time=slice(f'{bstart}-01-01',f'{bend}-12-31')).groupby('time.month').mean('time')
         f = go.Figure(go.Bar(x=seasonal.month,y=seasonal.values,marker_color=CYAN))
@@ -212,10 +245,10 @@ with explorer:
         st.caption('Each monthly anomaly compares accumulated rainfall with the same calendar month in the reference baseline.')
     export = pd.DataFrame({'year':series.year.values,'precipitation_mm':series.values,
                             'anomaly_mm':anomaly.sel(year=series.year).values,'standardized_anomaly':z.sel(year=series.year).values})
-    st.download_button('Download selected annual series · CSV',export.to_csv(index=False),file_name='saharawatch_annual.csv',mime='text/csv')
+    st.download_button('Take the evidence · Annual series CSV',export.to_csv(index=False),file_name='saharawatch_annual.csv',mime='text/csv')
 
 with comparison:
-    st.subheader('Different regions. A shared record.')
+    st.subheader('Cross-examine two landscapes')
     st.caption(f'Shared analysis period {start}–{end} · shared baseline {bstart}–{bend}')
     if len(countries) < 2:
         st.info('Country boundaries are unavailable. Grid-cell exploration remains available.')
@@ -244,18 +277,77 @@ with comparison:
         st.caption('Country masks use fixed center-point membership and cosine latitude weighting. The two slopes have not been tested for a statistically significant difference. Different climates can have very different absolute rainfall variability.')
 
 with guided:
-    st.subheader('Explore a Climate Mystery')
-    st.write('Begin with a question. Follow the observations, then weigh the evidence.')
-    investigations = [('morocco','01 / Is Morocco becoming drier?','Inspect the fitted trend, annual variability, and uncertainty for the Morocco country mask.'),
-                      ('compare','02 / Different regions, different trends','Open Regional comparison to compare Morocco with Algeria on shared years and baselines.'),
-                      ('anomaly','03 / Detect historical dry periods','Switch to the annual anomaly map, then change the observation year to explore rainfall deficits.'),
-                      ('trends','04 / Where are trends strongest?','Switch to the linear trend map. Hover to inspect magnitude, then use the significance layer to assess evidence.')]
-    for key,title,description in investigations:
-        with st.container(border=True):
+    st.subheader('Choose your next case')
+    st.write('A good detective begins with a question. Open a file, follow the trail, and let the observations challenge your first impression.')
+    investigations = [('morocco','Case 001 / Is Morocco becoming drier?','Inspect the fitted trend, annual variability, and uncertainty for the Morocco country mask.'),
+                      ('compare','Case 002 / Across the border','Open Cross-examine to compare Morocco with Algeria on shared years and baselines.'),
+                      ('anomaly','Case 003 / The dry-year files','Switch to the annual anomaly map, then change the observation year to explore rainfall deficits.'),
+                      ('trends','Case 004 / Follow the strongest trail','Switch to the linear trend map. Hover to inspect magnitude, then use the significance layer to assess evidence.')]
+    case_columns = st.columns(2)
+    for index, (key,title,description) in enumerate(investigations):
+        with case_columns[index % 2].container(border=True):
             st.markdown(f'### {title}')
             st.write(description)
-            st.button('Start investigation',key='preset_'+key,on_click=preset,args=(key,))
-    st.caption('Presets configure live calculations; they do not encode conclusions. Return to Precipitation explorer after starting an investigation.')
+            st.button('Open this case',key='preset_'+key,on_click=preset,args=(key,))
+    st.caption('Presets configure live calculations; they do not encode conclusions. Your case is now on the desk. Continue in Evidence atlas or Cross-examine.')
+
+with notebook:
+    st.subheader('Your field notebook')
+    st.write('Make a prediction. Gather clues. Leave room to change your mind.')
+    st.caption('The notebook stays in this browser session. Download your case report before closing or refreshing the session. Starting a fresh investigation clears it.')
+    context = f'{label}|{start}|{end}|{bstart}|{bend}|{alpha}'
+    hypothesis = st.radio('Working hypothesis', ['Rainfall is decreasing', 'Rainfall is increasing', 'I am still investigating'],
+                          key='hypothesis', horizontal=True)
+    finite_fit = np.isfinite(result['p'])
+    if not finite_fit:
+        assessment = 'The record is too short for a trend assessment. Gather at least ten complete years.'
+    elif result['p'] >= alpha:
+        assessment = 'Inconclusive: this exploratory trend test does not establish a direction of change. A dry year alone does not prove a drying trend.'
+    elif hypothesis == 'I am still investigating':
+        assessment = f'The exploratory test detects a {"decrease" if result["slope"] < 0 else "increase"}. Inspect the uncertainty before drawing a conclusion.'
+    else:
+        matches = (result['slope'] < 0) == (hypothesis == 'Rainfall is decreasing')
+        assessment = ('The exploratory trend supports your proposed direction.' if matches else 'The exploratory trend points in the opposite direction to your hypothesis.') + ' This does not establish a cause.'
+    st.html(f'<div class="clue-card"><p class="eyebrow">Current lead / {html.escape(label)}</p><h3>{html.escape(result["status"])}</h3><p>{html.escape(assessment)}</p></div>')
+    review_columns = st.columns(3)
+    checks = [review_columns[i].checkbox(title, key=f'review_{i}_{context}') for i, title in enumerate([
+        'I inspected the rainfall timeline', 'I checked the baseline & anomalies', 'I considered uncertainty & resolution'])]
+    st.progress(sum(checks) / 3, text=f'{sum(checks)} / 3 evidence checks recorded — self-reported, not a scientific score')
+    notes = st.text_area('Field notes', placeholder='What caught your eye? What other explanation would you investigate?', key=f'notes_{context}')
+    st.session_state.setdefault('clues', [])
+    if st.button('＋ Pin this evidence to the notebook', key='pin_evidence', type='primary'):
+        snapshot = dict(location=label, period=f'{start}–{end}', baseline=f'{bstart}–{bend}',
+                        source=f'GPCP {metadata["version"]} / NOAA PSL', coverage=f'{metadata["start"]} to {metadata["end"]}',
+                        hypothesis=hypothesis, mean_mm=fmt(result['mean']), trend_mm_decade=fmt(result['decade']),
+                        p_value=fmt(result['p'], 6), confidence_interval=f'{fmt(result["low"])} to {fmt(result["high"])} mm/decade',
+                        alpha=alpha, valid_years=result['n'], status=result['status'],
+                        observation_year=anomaly_year, anomaly_mm=fmt(float(anomaly.sel(year=anomaly_year))),
+                        checks=sum(checks), notes=notes, assessment=assessment)
+        if snapshot not in st.session_state['clues']:
+            st.session_state['clues'].append(snapshot)
+            st.success('Evidence pinned with its location, period, baseline, and uncertainty.')
+        else:
+            st.info('This exact evidence is already pinned. Change the location, period, hypothesis, or notes to add another lead.')
+    clues = st.session_state['clues']
+    st.markdown(f'### Pinned evidence · {len(clues):02d}')
+    if not clues:
+        st.info('Your notebook is empty. Inspect the atlas, then pin your first finding here.')
+    report = ['# SaharaWatch / Climate detective case report', '',
+              'Exploratory historical rainfall analysis. Not a drought forecast or climate attribution.', '']
+    for i, clue in enumerate(clues):
+        with st.expander(f'Clue {i+1:02d} · {clue["location"]} · {clue["period"]}'):
+            st.write(f'**{clue["status"]}**')
+            st.write(f'Trend: {clue["trend_mm_decade"]} mm/decade · raw OLS p = {clue["p_value"]} · 95% CI: {clue["confidence_interval"]}')
+            st.caption(f'Baseline {clue["baseline"]} · {clue["valid_years"]} complete years · α = {clue["alpha"]} · {clue["source"]}')
+            st.write(clue['assessment'])
+            if clue['notes']:
+                st.text(clue['notes'])
+            st.button('Remove this clue', key=f'remove_clue_{i}', on_click=lambda index=i: st.session_state['clues'].pop(index))
+        report.extend([f'## Clue {i+1:02d}', *[f'- {key.replace("_", " ")}: {value}' for key, value in clue.items()], ''])
+    report.extend(['## Scientific limits', 'Raw OLS inference assumes independent residuals; autocorrelation can understate uncertainty. Country masks use cell centers and latitude weights on a 2.5° grid. Anomalies are not SPI. Statistical significance does not establish causation.', '',
+                   'Data: https://psl.noaa.gov/data/gridded/data.gpcp.html', 'Boundaries: Natural Earth (public domain).'])
+    st.download_button('Download the case report · Markdown', '\n'.join(report), file_name='saharawatch_case_report.md',
+                       mime='text/markdown', disabled=not clues)
 
 with methods:
     st.subheader('Observations first. Methods in the open.')
@@ -283,4 +375,4 @@ with methods:
     if provenance.exists():
         st.download_button('Download preparation provenance',provenance.read_text(),file_name='provenance.json',mime='application/json')
 
-st.html('<div class="footer">SAHARAWATCH &nbsp; / &nbsp; Historical evidence, openly explored. &nbsp; · &nbsp; Data provided by NOAA PSL, Boulder, Colorado, USA. GPCP satellite–gauge analysis. &nbsp; · &nbsp; Natural Earth boundaries.</div>')
+st.html('<div class="footer">SAHARAWATCH / CLIMATE DETECTIVE BUREAU &nbsp; · &nbsp; No hunch without evidence. &nbsp; · &nbsp; Data provided by NOAA PSL, Boulder, Colorado, USA. GPCP satellite–gauge analysis. &nbsp; · &nbsp; Natural Earth boundaries.</div>')

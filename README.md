@@ -1,6 +1,6 @@
 # SaharaWatch
 
-**Earth System Trend Intelligence for MENA.** Explore historical precipitation across the Middle East and North Africa using real GPCP observations, interactive maps, and transparent statistical analysis.
+**Earth System Trend Intelligence for MENA.** Investigate historical precipitation across the Middle East and North Africa in a climate detective’s workspace, using real GPCP observations, interactive maps, and transparent statistical analysis.
 
 Built for NASA Space Apps Challenge 2026, **Be An Earth System Trend Detective!** The dashboard connects *what is changing*, *where*, *by how much*, and *with what evidence*. MENA is a useful case study because arid and semiarid climates make rainfall variability and water availability important questions. SaharaWatch supports historical investigation, not drought forecasting or climate attribution.
 
@@ -30,7 +30,12 @@ The prepared dataset in this workspace covers **January 1979–October 2026**; c
 - Change the analysis window, baseline, anomaly observation year, and significance threshold.
 - Inspect annual and monthly rainfall, a fitted annual trend, optional moving averages, seasonal climatology, and anomalies.
 - Compare two country series on shared axes, in rainfall units or standardized anomalies.
-- Start guided investigations, inspect the methodology, and export the selected annual series as CSV.
+- Open themed case files, inspect the methodology, and export the selected annual series as CSV.
+- Jump to the selected location’s driest year, trace its long-term trend, or challenge the evidence with the significance map.
+- Record a working hypothesis in the field notebook and compare it with the calculated trend, including inconclusive results.
+- Pin evidence snapshots with their location, analysis period, baseline, source, uncertainty, and field notes. Remove clues or download a Markdown case report. The notebook is session-only; download it before closing or refreshing the session. Starting a fresh investigation clears it.
+
+The interface combines a Victorian detective’s casebook with a drought field station: parchment surfaces, forest-green ink, brass accents, terracotta deficits, a magnifying-glass illustration, and local topographic-style decoration. All chart palettes use the same earth tones; decorative elements do not represent measured geography.
 
 The dashboard uses Streamlit, Plotly, xarray, NumPy, Pandas, SciPy, netCDF4, and Shapely. Source loading, scientific calculations, and plotting are separate small modules in `saharawatch/`; there is no separate backend service.
 
@@ -81,7 +86,7 @@ pytest -q
 python scripts/validate_data.py
 ```
 
-The tests cover calendar-aware conversion, leap years, complete-year totals, missing and invalid values, coordinate normalization and lookup, weighted regional aggregation, known and constant trend series, p-values and confidence intervals against SciPy, baseline anomalies, zero variance, FDR, and the real GPCP pipeline. Streamlit AppTest exercises indicator switching, period and country changes, monthly view, baseline validation, comparison, guided presets, and the missing-data error state. Real-data tests are explicitly skipped when the raw file is unavailable; run preparation first to exercise them.
+The tests cover calendar-aware conversion, leap years, complete-year totals, missing and invalid values, coordinate normalization and lookup, weighted regional aggregation, known and constant trend series, p-values and confidence intervals against SciPy, baseline anomalies, zero variance, FDR, and the real GPCP pipeline. Streamlit AppTest exercises indicator switching, period and country changes, monthly view, baseline validation, comparison, guided presets, the missing-data error state, driest-year selection, and evidence snapshot preservation across changes to the analysis period. Real-data tests are explicitly skipped when the raw file is unavailable; run preparation first to exercise them.
 
 Optional browser verification (with the app running on port 8501):
 
@@ -91,12 +96,12 @@ playwright install chromium
 python scripts/browser_smoke.py
 ```
 
-The browser check verifies rendered plots, country and tab navigation, browser errors, and a 390px mobile viewport. It saves screenshots in `assets/`.
+The browser check verifies rendered plots, country and tab navigation, detective controls, note-taking, report downloads, browser errors, and a 390px mobile viewport. Set `SAHARAWATCH_TEST_URL` to test a local server on another port. It saves screenshots in `assets/`.
 
 ## Incomplete and future work
 
-Phase 1 and Phase 2 are implemented. Phase 3 remains limited to CSV export; **formal SPI, temperature/MERRA-2 integration, robust autocorrelation-adjusted inference, Theil–Sen/Mann–Kendall tests, and AI-generated interpretation are not implemented**. Deterministic descriptions explain the actual calculations.
+Phase 1 and Phase 2 are implemented. Phase 3 includes CSV export and a Markdown report of pinned evidence; **formal SPI, temperature/MERRA-2 integration, robust autocorrelation-adjusted inference, Theil–Sen/Mann–Kendall tests, and AI-generated interpretation are not implemented**. Deterministic descriptions explain the actual calculations.
 
-Grid-cell selection uses dependable coordinate inputs; map-click selection is not implemented. Comparisons currently support country masks, not two arbitrary grid cells. Fractional country coverage, formal trend-difference testing, and public deployment also remain future work. CSV exports contain measurements and anomalies; there is no complete investigation-report export.
+Grid-cell selection uses dependable coordinate inputs; map-click selection is not implemented. Comparisons currently support country masks, not two arbitrary grid cells. Fractional country coverage, formal trend-difference testing, and public deployment also remain future work. CSV exports contain measurements and anomalies. Notebook reports capture pinned evidence and notes; they do not include chart images or the underlying full dataset.
 
 For Streamlit Community Cloud, install the pinned requirements and prepare the source file in the deployment environment before launch. The app deliberately does not silently fetch missing data or substitute demo observations. Hosting has not been deployed or verified.
