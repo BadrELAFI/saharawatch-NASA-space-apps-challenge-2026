@@ -1,6 +1,7 @@
 """Validate GPCP monthly rates and preserve missingness through aggregation."""
 from pathlib import Path
 import json
+import hashlib
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -10,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / 'data/raw/precip.mon.mean.nc'
 SOURCE = 'https://psl.noaa.gov/thredds/fileServer/Datasets/gpcp/precip.mon.mean.nc'
 EXTENT = (-18, 63, 10, 43)
-VARIABLES = {'precip': {'label': 'Precipitation', 'monthly_units': 'mm', 'annual_units': 'mm/year', 'aggregation': 'sum'}}
+VARIABLES = {'precip': {'label': 'Precipitation', 'monthly_units': 'mm', 'annual_units': 'mm/year', 'aggregation': 'sum'}, 't2m': {'label':'Temperature at 2 m · NASA POWER','monthly_units':'°C','annual_units':'°C','aggregation':'day-weighted mean'}}
 
 
 def normalize_longitude(data):
@@ -78,6 +79,7 @@ def load_data(path=RAW):
         raise ValueError(f'Cannot read GPCP NetCDF: {exc}') from exc
     if not subset.sizes['lat'] or not subset.sizes['lon']:
         raise ValueError('The dataset does not cover MENA.')
+    metadata['sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
     monthly = monthly_totals(subset)
     return monthly, annual_totals(monthly), metadata
 
@@ -115,15 +117,43 @@ def country_mask(data, feature):
 
 def regional_series(data, mask):
     """Fixed mask and weights; a missing member makes the regional value missing."""
-    n = int(mask.sum())
-    if n == 0:
-        raise ValueError('No GPCP cell centers inside this boundary. Select a grid cell instead.')
-    weights = np.cos(np.deg2rad(data.lat)).broadcast_like(mask).where(mask, 0)
-    result = (data.where(mask) * weights).sum(('lat', 'lon'), skipna=True) / weights.sum()
-    return result.where(data.where(mask).count(('lat', 'lon')) == n).assign_attrs(data.attrs)
+    included=mask>0
+    n=int(included.sum())
+    if n==0:
+        raise ValueError('No GPCP cells overlap this boundary. Select a grid cell instead.')
+    if mask.dtype==bool:
+        weights=np.cos(np.deg2rad(data.lat)).broadcast_like(mask).where(mask,0)
+    else:
+        if not bool((np.isfinite(mask)&(mask>=0)).all()):
+            raise ValueError('Area weights must be finite and nonnegative.')
+        weights=mask
+    result=(data.where(included)*weights).sum(('lat','lon'),skipna=True)/weights.sum()
+    return result.where(data.where(included).count(('lat','lon'))==n).assign_attrs(data.attrs)
 
 
 def grid_series(data, lat, lon):
     if not 10 <= lat <= 43 or not -18 <= lon <= 63:
         raise ValueError('Coordinates must be inside the MENA study extent.')
     return data.sel(lat=lat, lon=lon, method='nearest')
+
+
+def country_weights(data, feature, method='Center-point'):
+    """Fractional overlap in an equal-area CRS, or the legacy center-point mask."""
+    if method=='Center-point':
+        return country_mask(data,feature)
+    if method!='Fractional area':
+        raise ValueError('Unknown country weighting method.')
+    from shapely.geometry import box
+    from shapely import transform
+    from pyproj import Transformer
+    project=Transformer.from_crs('EPSG:4326','EPSG:6933',always_xy=True).transform
+    country=shape(feature['geometry'])
+    weights=np.zeros((data.sizes['lat'],data.sizes['lon']))
+    for i,lat in enumerate(data.lat.values):
+        for j,lon in enumerate(data.lon.values):
+            cell=box(float(lon)-1.25,float(lat)-1.25,float(lon)+1.25,float(lat)+1.25)
+            intersection=country.intersection(cell)
+            if not intersection.is_empty:
+                weights[i,j]=transform(intersection.segmentize(.1),project,interleaved=False).area
+    return xr.DataArray(weights,dims=('lat','lon'),coords={'lat':data.lat,'lon':data.lon},
+                        attrs={'units':'m2','method':'Fractional area in EPSG:6933; boundary edges densified to 0.1°'})

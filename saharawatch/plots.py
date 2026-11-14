@@ -50,17 +50,24 @@ def map_figure(values, title, units, period, pvalues=None, selected=None, featur
         custom=np.column_stack((custom,observed.transpose('lat','lon').values.ravel(),expected.transpose('lat','lon').values.ravel()))
     fig = go.Figure(go.Choroplethmap(
         geojson=geojson, locations=[f['id'] for f in geojson['features']], z=z,
-        customdata=custom, zmin=lo, zmax=hi, colorscale=DIVERGING if diverging else RAIN,
+        customdata=custom.tolist(), zmin=lo, zmax=hi, colorscale=DIVERGING if diverging else RAIN,
         marker=dict(opacity=.9, line=dict(width=.35, color='#8c865f')),
         colorbar=dict(title=dict(text=units, side='right'), thickness=9, len=.75, tickfont_size=10),
         hovertemplate=('<b>%{customdata[0]:.2f}° N, %{customdata[1]:.2f}° E</b><br>'
                        +title+': %{z:.2f} '+units+'<br>'+period+
-                       ('<br>Raw OLS p = %{customdata[2]:.4f}' if pvalues is not None else '')+
+                       ('<br>Unadjusted method p = %{customdata[2]:.4f}' if pvalues is not None else '')+
                        ('<br>Observed: %{customdata[3]:.1f} mm<br>Baseline: %{customdata[4]:.1f} mm' if observed is not None else '')+'<extra></extra>'),
         name=title))
     if significance:
         fig.data[0].colorscale = [[0,'#b15e3d'],[.2499,'#b15e3d'],[.25,'#d4c5a5'],[.7499,'#d4c5a5'],[.75,'#41694e'],[1,'#41694e']]
         fig.data[0].colorbar.update(tickvals=[-1,0,1],ticktext=['Decrease','Not significant','Increase'])
+    # Native Plotly point selection: cell centers retain the same measured values.
+    fig.add_trace(go.Scattermap(lat=centers[:,0],lon=centers[:,1],mode='markers',
+        marker=dict(size=5,color='#6c765a',opacity=.35),customdata=centers.tolist(),
+        text=[f'{v:.2f} {units}' if np.isfinite(v) else 'Insufficient data' for v in z],
+        name='Select cell',showlegend=False,
+        hovertemplate='Cell %{customdata[0]:.2f}° N, %{customdata[1]:.2f}° E<br>%{text}<extra></extra>'))
+    fig.update_layout(clickmode='event+select')
     # Draw local Natural Earth outlines and labels, so map context works offline.
     path = ROOT / 'data/boundaries/countries.geojson'
     if path.exists():
@@ -104,7 +111,7 @@ def history_figure(series, result, baseline=None, moving=False, monthly=False):
                              marker=dict(size=5),fill='tozeroy',fillcolor='rgba(65,105,78,.09)',
                              hovertemplate='%{x}: %{y:.1f} mm<extra></extra>'))
     if not monthly and np.isfinite(result['slope']):
-        fig.add_trace(go.Scatter(x=x,y=result['intercept']+result['slope']*x,name='Linear trend',
+        fig.add_trace(go.Scatter(x=x,y=result['intercept']+result['slope']*x,name=result.get('line_label','Linear trend'),
                                  mode='lines',line=dict(color=AMBER,width=2,dash='dash')))
     if moving:
         window = 60 if monthly else 5

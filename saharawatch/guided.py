@@ -5,8 +5,9 @@ import xarray as xr
 import streamlit as st
 import plotly.graph_objects as go
 from .analysis import trend, annual_anomalies, fdr_bh
+from .inference import analyze_trend
 from .comparison import comparison_summary, comparison_interpretation
-from .data import country_mask, regional_series
+from .data import country_mask, regional_series, country_weights
 from .plots import history_figure, anomaly_figure, map_figure, style, CYAN, AMBER
 
 
@@ -26,34 +27,34 @@ def rank_trend_cells(grid, alpha=.05):
     return ranks,frame
 
 
-def render_live_investigation(annual, countries, start, end, bstart, bend, alpha, active_case, trend_values=None):
+def render_live_investigation(annual, countries, start, end, bstart, bend, alpha, active_case, trend_values=None, method='OLS', weighting='Center-point'):
     st.markdown('### Evidence for the open case')
-    st.caption(f'Live analysis {start}–{end} · anomaly baseline {bstart}–{bend}. Change the sidebar years to rerun this investigation.')
+    st.caption(f'Live analysis {start}–{end} · anomaly baseline {bstart}–{bend} · {method} inference. Change the sidebar years to rerun this investigation.')
     if active_case in ('morocco','compare'):
         if 'Morocco' not in countries:
             st.info('Morocco boundaries are unavailable. Use grid-cell exploration in the atlas.'); return
-        full=regional_series(annual,country_mask(annual,countries['Morocco']))
+        full=regional_series(annual,country_weights(annual,countries['Morocco'],weighting))
         s=full.sel(year=slice(start,end))
-        result=trend(s.year.values,s.values,alpha)
+        result=analyze_trend(s.year.values,s.values,alpha,method)
         anomaly,z,base=annual_anomalies(full,bstart,bend)
         if active_case=='morocco':
             number=lambda v: f'{v:.4g}' if np.isfinite(v) else 'Unavailable'
             st.write(f'Morocco: **{result["status"]}**. Estimated trend {number(result["decade"])} mm/decade; '
-                     f'raw OLS p = {number(result["p"])}; 95% interval {number(result["low"])} to {number(result["high"])} mm/decade; n = {result["n"]}.')
+                     f'{method} p = {number(result["p"])}; 95% interval {number(result["low"])} to {number(result["high"])} mm/decade; n = {result["n"]}.')
             st.plotly_chart(history_figure(s,result,baseline=float(base)),width='stretch',theme=None,key='guided_morocco_history')
             st.plotly_chart(anomaly_figure(anomaly.sel(year=s.year),False,s,base),width='stretch',theme=None,key='guided_morocco_anomalies')
-            st.caption('Country center-point mask with cosine latitude weighting. OLS inference is exploratory; nonsignificance does not prove no change. A rainfall deficit alone does not establish agricultural or hydrological drought.')
+            st.caption('Country weights follow the selected sidebar method. OLS inference is exploratory; nonsignificance does not prove no change. A rainfall deficit alone does not establish agricultural or hydrological drought.')
         else:
             options=[name for name in ['Algeria','Tunisia'] if name in countries]
             if not options:
                 st.info('Comparison country boundaries are unavailable.'); return
             partner=st.selectbox('Compare Morocco with',options,key='guided_partner')
-            other=regional_series(annual,country_mask(annual,countries[partner]))
+            other=regional_series(annual,country_weights(annual,countries[partner],weighting))
             normalized=st.toggle('Normalize guided comparison',key='guided_normalize')
             summaries=[]
             figure=go.Figure()
             for name,data,color in [('Morocco',full,CYAN),(partner,other,AMBER)]:
-                summary=comparison_summary(data,name,start,end,bstart,bend,alpha)
+                summary=comparison_summary(data,name,start,end,bstart,bend,alpha,method)
                 summaries.append(summary)
                 plotted=annual_anomalies(data,bstart,bend)[1] if normalized else data
                 plotted=plotted.sel(year=slice(start,end))
@@ -80,7 +81,7 @@ def render_live_investigation(annual, countries, start, end, bstart, bend, alpha
         figure.data[0].reversescale=True
         st.plotly_chart(figure,width='stretch',theme=None,key='guided_rank_map')
         st.caption('Rank 1 = largest absolute fitted rainfall trend in mm/decade. All finite cells in the rectangle are ranked, including ocean. '
-                   'Equal magnitudes are ordered by latitude then longitude. Magnitude ranking is not significance; hover p-values are raw OLS. '
+                   'Equal magnitudes are ordered by latitude then longitude. Magnitude ranking is not significance; hover p-values are unadjusted values from the selected inference method. '
                    'The table separately flags Benjamini–Hochberg FDR significance at the selected α.')
         st.dataframe(frame.head(20),hide_index=True,width='stretch')
         frame['analysis_start']=start;frame['analysis_end']=end;frame['alpha']=alpha

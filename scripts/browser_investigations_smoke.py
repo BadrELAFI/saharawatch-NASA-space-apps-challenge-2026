@@ -17,7 +17,7 @@ with sync_playwright() as p:
     with page.expect_download() as download:
         page.get_by_role('button',name='Download trend diagnostics · CSV',exact=True).click()
     rows=list(csv.DictReader(StringIO(Path(download.value.path()).read_text())))
-    assert len(rows)==2 and any('HAC' in r['method'] for r in rows)
+    assert len(rows)==3 and any('HAC' in r['method'] for r in rows) and any('MK' in r['method'] for r in rows)
     print('Feature 5: OLS/HAC diagnostics exported')
     page.get_by_role('tab',name='02 / Cross-examine',exact=True).click()
     page.get_by_role('radiogroup',name='Comparison geography',exact=True).get_by_text('Grid cells',exact=True).click()
