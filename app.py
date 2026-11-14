@@ -9,6 +9,7 @@ from saharawatch.data import (ROOT, RAW, VARIABLES, load_data, complete_years, g
 from saharawatch.briefing import render_country_briefing, assessment_text
 from saharawatch.inference import METHODS, analyze_trend, inference_grid
 from saharawatch.temperature import render_temperature
+from saharawatch.time_machine import render_time_machine
 from saharawatch.reports import build_report_archive
 from saharawatch.guided import render_live_investigation
 from saharawatch.comparison import render_comparison
@@ -195,6 +196,10 @@ with explorer:
                   on_click=set_lens, args=('Linear trend',))
     tool_c.button('⚖ Challenge the evidence', key='challenge_evidence', width='stretch',
                   on_click=set_lens, args=('Trend significance',))
+    if st.toggle('Open the rainfall time machine', key='rainfall_time_machine'):
+        with st.container(border=True):
+            render_time_machine(annual, whole_series, years, start, end, bstart, bend,
+                                label, metadata, selected=selected, feature=feature)
     titlecol,controlcol = st.columns([3,1])
     with titlecol:
         st.subheader('The evidence atlas')

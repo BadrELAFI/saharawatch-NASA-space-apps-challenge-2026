@@ -118,3 +118,23 @@ def test_deficit_views_and_spi_controls():
     assert 'spi_chart' not in [e.key for e in at.get('plotly_chart')]
     # Anomalies still render with the shorter, independent SPI calibration window.
     assert 'departure_chart' in [e.key for e in at.get('plotly_chart')]
+
+
+def test_time_machine_controls_follow_sidebar_and_preserve_inspection_year():
+    at = AppTest.from_file(ROOT / 'app.py').run(timeout=30)
+    at.toggle(key='rainfall_time_machine').set_value(True).run(timeout=30)
+    assert not at.exception
+    assert len(at.get('iframe')) == 1
+    inspection_year = at.selectbox(key='anomaly_year').value
+    at.radio(key='playback_period').set_value('Current analysis period').run(timeout=30)
+    at.selectbox(key='playback_speed').set_value('Fast').run(timeout=30)
+    at.slider(key='period').set_range(1991, 2020).run(timeout=30)
+    at.slider(key='baseline').set_range(1981, 2010).run(timeout=30)
+    at.radio(key='mode').set_value('Country aggregation').run(timeout=30)
+    assert not at.exception
+    assert len(at.get('iframe')) == 1
+    assert any('1991–2020 · Fixed 1981–2010 baseline' in caption.value for caption in at.caption)
+    assert at.selectbox(key='anomaly_year').value == min(inspection_year, 2020)
+    at.toggle(key='rainfall_time_machine').set_value(False).run(timeout=30)
+    assert not at.exception
+    assert not at.get('iframe')

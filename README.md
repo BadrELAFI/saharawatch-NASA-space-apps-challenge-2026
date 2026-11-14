@@ -36,6 +36,7 @@ Precipitation deficits are evidence of meteorological dryness, not a complete as
 
 ## Explore
 
+- Turn on **Open the rainfall time machine** in Evidence atlas to play annual rainfall anomaly maps alongside a synchronized timeline for the selected grid cell or country. Play, pause, restart, or scrub to a year; choose the full complete-year record or the analysis period and adjust playback speed. The baseline, map color scale, and timeline axes stay fixed throughout playback. Missing observations remain unfilled or gaps, and incomplete calendar years are excluded. Source interim-status notes remain visible. Playback starts paused and runs in the browser without a server request per frame; choose an anomaly indicator and Observation year in the atlas below for further investigation. The animation loads only when enabled, with Plotly bundled locally rather than fetched from a CDN.
 - Pan, zoom, and hover over actual **2.5° cells** in the MENA precipitation map. Geographic context uses local boundaries rather than requiring remote map tiles.
 - Switch between annual mean, linear trend, relative trend, annual anomaly, relative anomaly, standardized anomaly, and trend significance.
 - Click a grid-cell center on the atlas or enter coordinates, or choose a country using a boundary mask. All 11 countries in the specification are included.
@@ -50,6 +51,14 @@ Precipitation deficits are evidence of meteorological dryness, not a complete as
 The interface combines a Victorian detective’s casebook with a drought field station: parchment surfaces, forest-green ink, brass accents, terracotta deficits, a magnifying-glass illustration, and local topographic-style decoration. All chart palettes use the same earth tones; decorative elements do not represent measured geography.
 
 The dashboard uses Streamlit, Plotly, xarray, NumPy, Pandas, SciPy, netCDF4, and Shapely. Source loading, scientific calculations, and plotting are separate small modules in `saharawatch/`; there is no separate backend service.
+
+## Feature previews
+
+### Rainfall time machine
+
+Play through annual rainfall anomaly maps with a synchronized timeline, a year scrubber, and fixed scales. Open it from **01 / Evidence atlas → Open the rainfall time machine**.
+
+![Rainfall time machine showing the MENA anomaly map, synchronized rainfall timeline, and playback controls](assets/rainfall-history.png)
 
 ## Data and provenance
 
@@ -118,6 +127,7 @@ Optional browser verification (with the app running on port 8501):
 pip install -r requirements-dev.txt
 playwright install chromium
 python scripts/browser_smoke.py
+python scripts/browser_time_machine_smoke.py
 ```
 
 The browser check verifies rendered plots, country and tab navigation, detective controls, note-taking, report downloads, browser errors, and a 390px mobile viewport. Set `SAHARAWATCH_TEST_URL` to test a local server on another port. It saves screenshots in `assets/`.
