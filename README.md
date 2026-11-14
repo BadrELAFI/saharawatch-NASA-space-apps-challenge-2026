@@ -30,7 +30,7 @@ The prepared dataset in this workspace covers **January 1979–October 2026**; c
 - Change the analysis window, baseline, anomaly observation year, and significance threshold.
 - Inspect annual and monthly rainfall, a fitted annual trend, optional moving averages, seasonal climatology, and anomalies.
 - Compare two countries or two geographic grid cells on shared axes, in rainfall units or standardized anomalies. Each selection includes a historical chart, confidence interval, sample size, recent anomaly, and deterministic comparison of absolute and relative trend magnitudes. Download the summaries as CSV; differences in slope are not themselves significance-tested.
-- Open themed case files, inspect the methodology, and export the selected annual series as CSV.
+- Open **Explore a Climate Mystery** under **03 / Case files** for live Morocco trends and anomalies, Morocco versus Algeria/Tunisia comparisons, historical annual anomaly maps, and a ranking of absolute precipitation trends. Presets preserve the chosen analysis period. The strongest-trends case includes a ranked map, top-20 table, and complete CSV export; raw p-values and BH-FDR flags distinguish magnitude from statistical evidence.
 - Jump to the selected location’s driest year, trace its long-term trend, or challenge the evidence with the significance map.
 - Record a working hypothesis in the field notebook and compare it with the calculated trend, including inconclusive results.
 - Pin evidence snapshots with their location, analysis period, baseline, source, uncertainty, and field notes. Remove clues or download a Markdown case report. The notebook is session-only; download it before closing or refreshing the session. Starting a fresh investigation clears it.
@@ -89,7 +89,7 @@ Each calendar month must have at least **30 valid accumulated calibration observ
 
 Rolling accumulations retain observations before the analysis period. Missing calendar months are made explicit as missing, invalidating all affected rolling windows. SPI is computed only when enabled for the selected series and cached by observations, dates, scale, and calibration years. It does not fit every map cell at startup. The validated tests compare supported SPI observations against both the reference library and an independent gamma-CDF calculation, including zero precipitation and temporal gaps. Zero-inflated arid climates can limit SPI interpretation even with these checks.
 
-SPI export includes accumulation, score, scale, and calibration years. To exercise the new browser controls and CSV downloads with the app running, use `python scripts/browser_drought_smoke.py` after installing the development requirements.
+SPI export includes accumulation, score, scale, and calibration years. To exercise the new browser controls and CSV downloads with the app running, use `python scripts/browser_drought_smoke.py` after installing the development requirements. Use `python scripts/browser_investigations_smoke.py` to verify Features 5–7, including diagnostic and comparison exports, all four guided cases, and the ranked map.
 
 ## Test and verify
 

@@ -6,6 +6,7 @@ import pandas as pd
 import streamlit as st
 from saharawatch.data import (ROOT, RAW, VARIABLES, load_data, complete_years, grid_series,
                               select_period, boundaries, country_mask, regional_series)
+from saharawatch.guided import render_live_investigation
 from saharawatch.comparison import render_comparison
 from saharawatch.trend_diagnostics import render_trend_diagnostics
 from saharawatch.drought import anomaly_statistics
@@ -53,7 +54,10 @@ def set_lens(indicator, year=None):
 
 def preset(name):
     st.session_state['active_case'] = name
-    st.session_state.update(mode='Country aggregation',country='Morocco',first_country='Morocco',period=default_period)
+    st.session_state.update(mode='Country aggregation' if 'Morocco' in countries else 'Grid cell',
+                            country='Morocco',first_country='Morocco',
+                            comparison_mode='Countries' if len(countries)>=2 else 'Grid cells')
+    st.session_state.setdefault('period',default_period)
     if name == 'morocco':
         st.session_state['indicator']='Linear trend'
     elif name == 'compare':
@@ -265,7 +269,7 @@ with comparison:
     render_comparison(annual,countries,start,end,bstart,bend,alpha)
 
 with guided:
-    st.subheader('Choose your next case')
+    st.subheader('Explore a Climate Mystery')
     st.write('A good detective begins with a question. Open a file, follow the trail, and let the observations challenge your first impression.')
     investigations = [('morocco','Case 001 / Is Morocco becoming drier?','Inspect the fitted trend, annual variability, and uncertainty for the Morocco country mask.'),
                       ('compare','Case 002 / Across the border','Open Cross-examine to compare Morocco with Algeria on shared years and baselines.'),
@@ -277,7 +281,10 @@ with guided:
             st.markdown(f'### {title}')
             st.write(description)
             st.button('Open this case',key='preset_'+key,on_click=preset,args=(key,))
-    st.caption('Presets configure live calculations; they do not encode conclusions. Your case is now on the desk. Continue in Evidence atlas or Cross-examine.')
+    st.caption('Presets configure live calculations; they do not encode conclusions. Results for the open case appear below.')
+    active=st.session_state.get('active_case')
+    guided_trends=cached_trends(file_stamp,start,end,window) if active=='trends' else None
+    render_live_investigation(annual,countries,start,end,bstart,bend,alpha,active,guided_trends)
 
 with notebook:
     st.subheader('Your field notebook')
