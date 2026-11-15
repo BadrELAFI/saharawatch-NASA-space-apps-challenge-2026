@@ -2,7 +2,12 @@
 __pycache__/
 .pytest_cache/
 data/raw/*.nc
+!data/raw/precip.mon.mean.nc
 data/processed/
 *.part
 data/raw/power/
 data/raw/satellite/
+.streamlit/secrets.toml
+.env
+.env.*
+!.env.example

@@ -1,0 +1,15 @@
+.git
+.github
+.claude
+.codex
+.venv
+__pycache__
+**/__pycache__
+.pytest_cache
+.streamlit/secrets.toml
+.env
+.env.*
+data/processed
+data/raw/power
+data/raw/satellite
+*.part

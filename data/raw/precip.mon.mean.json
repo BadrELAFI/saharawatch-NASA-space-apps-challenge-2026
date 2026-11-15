@@ -1,0 +1,52 @@
+{
+  "source": "https://psl.noaa.gov/thredds/fileServer/Datasets/gpcp/precip.mon.mean.nc",
+  "title": "GPCP Version 2.3 Combined Precipitation Dataset (Final)",
+  "version": "V2.3",
+  "attributes": {
+    "Conventions": "CF-1.0",
+    "curator": "Dr. Jian-Jian Wang\nESSIC, University of Maryland College Park\nCollege Park, MD  20742  USA\nPhone: +1 301-405-4887",
+    "citation": "Adler, R.F., G.J. Huffman, A. Chang, R. Ferraro, P. Xie, J. Janowiak, B. \nRudolf, U. Schneider, S. Curtis, D. Bolvin, A. Gruber, J. Susskind, P. \nArkin, 2003: The Version 2 Global Precipitation Climatology Project \n(GPCP) Monthly Precipitation Analysis (1979 - Present). J. Hydrometeor., \n4(6), 1147-1167.",
+    "title": "GPCP Version 2.3 Combined Precipitation Dataset (Final)",
+    "platform": "NOAA POES (Polar Orbiting Environmental Satellites)",
+    "source_obs": "CDR RSS SSMI/SSMIS Tbs over ocean \nCDR SSMI/SSMIS rainrates over land (Ferraro) \nGeo-IR (Xie) calibrated by SSMI/SSMIS rainrates for sampling \nTOVS/AIRS empirical precipitation estimates at higher latitudes \n(ocean and land) \nGPCC gauge analysis to bias correct satellite estimates over land and \nmerge with satellite based on sampling \nOLR Precipitation Index (OPI) (Xie) used for period before 1988",
+    "documentation": "http://www.esrl.noaa.gov/psd/data/gridded/data.gpcp.html",
+    "version": "V2.3",
+    "Acknowledgement": "\n",
+    "contributor_name": "Robert Adler    University of Maryland \nGeorge Huffman  NASA Goddard Space Flight Center \nDavid Bolvin    NASA Goddard Space Flight Center/SSAI \nEric Nelkin     NASA Goddard Space Flight Center/SSAI \nUdo Schneider   GPCC, Deutscher Wetterdienst \nAndreas Becker  GPCC, Deutscher Wetterdienst \nLong Chiu       George Mason University \nMathew Sapiano  University of Maryland \nPingping Xie    Climate Prediction Center, NWS, NOAA \nRalph Ferraro   NESDIS, NOAA \nJian-Jian Wang  University of Maryland \nGuojun Gu       University of Maryland",
+    "dataset_title": "Global Precipitation Climatology Project (GPCP) Monthly Analysis Product",
+    "description": "https://data.nodc.noaa.gov/cgi-bin/iso?id=gov.noaa.ncdc:C00970",
+    "source": "https://www.ncei.noaa.gov/data/global-precipitation-climatology-project-gpcp-monthly/access/",
+    "source_documentation": "https://www.ncdc.noaa.gov/cdr/atmospheric/precipitation-gpcp-monthly",
+    "NCO": "4.6.9",
+    "history": "Generated at NOAA/ESRL PSD Sep 9 2016 based on data from source \nand stored in single netCDF4 file",
+    "References": "http://www.psl.noaa.gov/data/gridded/data.gpcp.html",
+    "data_comment": "Interim data covers 2021/11 through latest."
+  },
+  "variable_attributes": {
+    "long_name": "Average Monthly Rate of Precipitation",
+    "valid_range": "[  0. 100.]",
+    "units": "mm/day",
+    "precision": "32767",
+    "var_desc": "Precipitation",
+    "dataset": "GPCP Version 2.3 Combined Precipitation Dataset",
+    "level_desc": "Surface",
+    "statistic": "Mean",
+    "parent_stat": "Mean",
+    "actual_range": "[ 0.       47.327435]"
+  },
+  "dimensions": {
+    "lat": 72,
+    "nv": 2,
+    "lon": 144,
+    "time": 574
+  },
+  "start": "1979-01-01",
+  "end": "2026-10-01",
+  "sha256": "f82d867432102665f9203ba01ef367c68463a37b81c23917f940dd1d8ccb8027",
+  "prepared_at": "2026-11-15T19:41:54.742460+00:00",
+  "mena_shape": {
+    "time": 574,
+    "lat": 13,
+    "lon": 32
+  }
+}

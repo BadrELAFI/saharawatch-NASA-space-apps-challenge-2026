@@ -4,6 +4,7 @@ import html
 import io
 import json
 import os
+import shutil
 from pathlib import Path
 import zipfile
 import pandas as pd
@@ -11,11 +12,29 @@ import numpy as np
 import plotly.graph_objects as go
 
 
+def configure_report_browser():
+    """Respect an explicit browser, then find system Chrome or local Playwright."""
+    if os.environ.get('BROWSER_PATH'):
+        return os.environ['BROWSER_PATH']
+    for name in ('chromium','chromium-browser','google-chrome','google-chrome-stable'):
+        browser=shutil.which(name)
+        if browser:
+            os.environ['BROWSER_PATH']=browser
+            return browser
+    cache=Path(os.environ.get('PLAYWRIGHT_BROWSERS_PATH',Path.home()/'.cache/ms-playwright'))
+    for pattern in ('chromium-*/chrome-linux64/chrome','chromium-*/chrome-linux/chrome'):
+        for browser in sorted(cache.glob(pattern),reverse=True):
+            if browser.is_file() and os.access(browser,os.X_OK):
+                os.environ['BROWSER_PATH']=str(browser)
+                return str(browser)
+    # Kaleido can discover other supported installations itself.
+    return None
+
+
 def build_report_archive(clues):
     """Only pinned observations are used; charts cannot drift with current filters."""
     if not clues:raise ValueError('Pin evidence before creating an illustrated report.')
-    chrome=Path.home()/'.cache/ms-playwright/chromium-1255/chrome-linux64/chrome'
-    if chrome.exists():os.environ.setdefault('BROWSER_PATH',str(chrome))
+    configure_report_browser()
     parts=['<!doctype html><html><head><meta charset="utf-8"><title>SaharaWatch investigation</title>',
            '<style>body{font:16px system-ui;max-width:1000px;margin:3em auto;padding:0 1em;line-height:1.6}img{width:100%}pre{white-space:pre-wrap}article{page-break-after:always}table{border-collapse:collapse}td{padding:.3em;border-bottom:1px solid #ddd}</style></head><body>',
            '<h1>SaharaWatch · Evidence report</h1><p>Historical exploration; not a drought forecast. Data: <a href="https://psl.noaa.gov/data/gridded/data.gpcp.html">NOAA PSL GPCP satellite–gauge analysis</a>. Boundaries: Natural Earth.</p>']

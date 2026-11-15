@@ -1,10 +1,10 @@
 # SaharaWatch
 
-**Earth System Trend Intelligence for MENA.** Investigate historical precipitation across the Middle East and North Africa in a climate detective’s workspace, using real GPCP observations, interactive maps, and transparent statistical analysis.
+**A playable climate detective’s desk for MENA.** Open a worn case folder, make a hypothesis, inspect real rainfall and satellite evidence, and build a conclusion you can defend. Six cases combine guided quizzes with independent investigations across the Middle East and North Africa.
 
 Built for NASA Space Apps Challenge 2026, **Be An Earth System Trend Detective!** The dashboard connects *what is changing*, *where*, *by how much*, and *with what evidence*. MENA is a useful case study because arid and semiarid climates make rainfall variability and water availability important questions. SaharaWatch supports historical investigation, not drought forecasting or climate attribution.
 
-![SaharaWatch dashboard with real GPCP precipitation](assets/dashboard.png)
+![Detective’s desk with six worn case folders, a banker’s lamp and evidence notes](assets/office-landing.png)
 
 ## Run locally
 
@@ -14,13 +14,26 @@ Use Python **3.12** (tested with 3.12.14). No account, paid API, or GPU is neede
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python scripts/prepare_data.py
 streamlit run app.py
 ```
 
-Open **http://localhost:8501**. The preparation command downloads the approximately 20 MB rainfall source file once. Subsequent runs validate the existing file. To explicitly update it, use `python scripts/prepare_data.py --refresh`. Downloads are validated before replacing an existing valid file. Rainfall exploration uses the prepared local observations and shows an actionable error if that source is missing or malformed. Custom satellite imagery and point temperature observations download only through their explicit load buttons; downloaded evidence is cached locally.
+Open **http://localhost:8501**. The repository includes a validated, approximately 20 MB rainfall snapshot and SHA-256 provenance, so startup needs no data download. Validate it with `python scripts/check_deployment.py`. To intentionally update it, use `python scripts/prepare_data.py --refresh` and review the NetCDF and JSON changes together. Downloads are validated before replacing an existing valid file. Missing or malformed observations produce an actionable error. Custom satellite imagery and temperature observations download only through their explicit load buttons and are cached locally.
 
-Start with **Explore rainfall**, **Compare satellite images**, or **Quizzes & investigations** at the top. Satellite imagery has its own tab beside the atlas; its date controls are separate from rainfall filters. Case files offer a guided quiz or an independent investigation for each of the six folders.
+**Deploy for free:** use Streamlit Community Cloud with entrypoint `app.py` and Python **3.12**. The repository supplies Python dependencies, Chromium system packages and bundled evidence. See [deployment instructions and release checks](DEPLOYMENT.md) for setup, or use the included Dockerfile on a container host.
+
+## Find your way around
+
+The app starts at **Detective's desk**. Open any folder, choose **Answer the quiz** or **Investigate on your own**, and follow the evidence. For a first visit, try **Case 001 / Is Morocco becoming drier?**
+
+| What you want to do | Where to go |
+| --- | --- |
+| Open a case or return to your desk | **Detective's desk** → select a folder |
+| Inspect rainfall maps and historical charts | **Explore rainfall** → **01 / Evidence atlas** |
+| Compare photographs and choose image years | **Compare satellite images** → **Satellite images** |
+| Choose a quiz or independent investigation | **Quizzes & investigations** → **03 / Case files** |
+| Review pinned clues, connect evidence and export reports | **04 / Field notebook**, or **Visit the evidence board** on the desk |
+
+Open **Rainfall controls** in the sidebar to change the location and analysis period. Satellite image dates are set in the satellite workspace. **Desk sounds** is optional and starts muted. Notes and progress stay in the current session; download reports to keep them.
 
 The prepared dataset in this workspace covers **January 1979–October 2026**; complete calendar years through **2025** are available for annual exploration. The default analysis is **2001–2024**, with a **2001–2020** anomaly baseline. Coverage follows the downloaded file, not a hardcoded latest date.
 
@@ -53,11 +66,27 @@ Precipitation deficits are evidence of meteorological dryness, not a complete as
 - Pin evidence snapshots with their location, analysis period, baseline, source, uncertainty, and field notes. Remove clues or download a Markdown case report. The notebook is session-only; download it before closing or refreshing the session. Starting a fresh investigation clears it.
 - Arrange pinned snapshots on the **connected evidence board** in Field notebook. Drag card headings with a mouse or touch; red pushpins lock cards in place. Choose **Supports**, **Challenges**, or **Provides context**, then press **Connect** on two cards to add a labeled red string. Connections record your interpretation, not causation or statistical significance. Positions, locks, and links survive dashboard interactions within the session; removing a clue removes its connections without moving the others. Download the board as JSON to retain the layout, links, and original evidence; Markdown reports also include the relationships. Keyboard users can focus a card heading, use arrow keys to move it, and press Space to toggle its pin. The board scrolls within its frame on small screens.
 
-The interface combines a Victorian detective’s casebook with a drought field station: parchment surfaces, forest-green ink, brass accents, terracotta deficits, a magnifying-glass illustration, and local topographic-style decoration. All chart palettes use the same earth tones; decorative elements do not represent measured geography.
+The interface combines a dim detective’s office with a drought field station: dark timber, lamplight, worn folders, parchment evidence, forest-green ink and brass accents. Charts retain readable earth-tone palettes; decorative elements do not represent measured geography.
 
 The dashboard uses Streamlit, Plotly, xarray, NumPy, Pandas, SciPy, netCDF4, and Shapely. Source loading, scientific calculations, and plotting are separate small modules in `saharawatch/`; there is no separate backend service.
 
 ## Feature previews
+
+### The detective’s office
+
+The app opens on a wooden desk under a green banker’s lamp, with six worn case folders and a wall showing your latest pinned clues. Open a folder to continue its quiz or investigation, or use the desk’s field instruments to reach the map, satellite photographs and evidence board. Returning to the desk keeps your session’s casework.
+
+[View the full rainfall workspace](assets/dashboard.png) · [View the desk on mobile](assets/office-landing-mobile.png)
+
+Maps, quiz charts and satellite comparisons sit in labeled evidence mounts. Shadows, clips and paper wear frame the evidence; the observations and image pixels remain unchanged. Completed quizzes and saved investigations receive a filing stamp.
+
+**Desk sounds** in the sidebar is off by default. Enable it for quiet paper movement, pencil feedback and filing sounds, synthesized locally without audio downloads. Folder opening and filing animations respect reduced-motion preferences. All controls remain available with sound disabled.
+
+![Rainfall map mounted as a labeled field exhibit](assets/office-field-map.png)
+
+![Satellite photographs in an evidence sleeve with the comparison divider](assets/office-photographs.png)
+
+Run `python scripts/browser_office_smoke.py` to check desk navigation, evidence mounts, opt-in sound, completed-quiz filing and reduced-motion mobile behavior.
 
 ### Satellite before/after reveal
 
@@ -146,7 +175,8 @@ Preparation writes:
 
 | File | Contents |
 | --- | --- |
-| `data/raw/precip.mon.mean.nc` | Unmodified downloaded source, excluded from Git |
+| `data/raw/precip.mon.mean.nc` | Unmodified source snapshot, included for reproducible deployment |
+| `data/raw/precip.mon.mean.json` | Bundled snapshot provenance and SHA-256 |
 | `data/processed/mena_monthly.nc` | Calendar-aware monthly accumulations for the MENA grid |
 | `data/processed/provenance.json` | Source URL, SHA-256, preparation timestamp, schema, coverage, metadata |
 
@@ -185,6 +215,9 @@ SPI export includes accumulation, score, scale, and calibration years. To exerci
 ## Test and verify
 
 ```bash
+pip install -r requirements-dev.txt
+python -m playwright install --with-deps chromium
+python scripts/check_deployment.py --render-report
 pytest -q
 python scripts/validate_data.py
 ```
@@ -197,13 +230,14 @@ Optional browser verification (with the app running on port 8501):
 pip install -r requirements-dev.txt
 playwright install chromium
 python scripts/browser_smoke.py
+python scripts/browser_office_smoke.py
 python scripts/browser_time_machine_smoke.py
 python scripts/browser_board_smoke.py
 ```
 
 The browser check verifies rendered plots, country and tab navigation, detective controls, note-taking, report downloads, browser errors, and a 390px mobile viewport. Set `SAHARAWATCH_TEST_URL` to test a local server on another port. It saves screenshots in `assets/`.
 
-To refresh the README's dashboard, evidence-board and rainfall-playback images, run `python scripts/capture_readme.py`. The folder and satellite browser checks refresh their corresponding desktop and mobile previews from the running app.
+To refresh the desk, physical map and photographic evidence previews, run `python scripts/browser_office_smoke.py`. Use `python scripts/capture_readme.py` for the dashboard, evidence board and rainfall playback. The folder and satellite browser checks refresh their corresponding desktop and mobile previews. Set `SAHARAWATCH_TEST_URL` to the running app's URL when using a port other than 8501.
 
 ## Additional local improvements
 
@@ -223,6 +257,6 @@ Run `python scripts/browser_improvements_smoke.py` against the local app to veri
 
 ## Remaining limitations
 
-Public deployment is intentionally excluded. Temperature integration is point-based, not a regional temperature map or national aggregation. Country summaries still use coarse GPCP cell values and generalized Natural Earth boundaries, even with fractional areas. MK supplies no autocorrelation-adjusted slope CI. SPI remains a selected-series calculation. Interpretations remain deterministic; no paid or local language model is required. These scientific scope limits are explicit in the interface and are not substituted with synthetic observations.
+Temperature integration is point-based, not a regional temperature map or national aggregation. Country summaries still use coarse GPCP cell values and generalized Natural Earth boundaries, even with fractional areas. MK supplies no autocorrelation-adjusted slope CI. SPI remains a selected-series calculation. Interpretations remain deterministic; no paid or local language model is required. These scientific scope limits are explicit in the interface and are not substituted with synthetic observations.
 
-For Streamlit Community Cloud, install the pinned requirements and prepare the source file in the deployment environment before launch. The app deliberately does not silently fetch missing data or substitute demo observations. Hosting has not been deployed or verified.
+Deployment configuration is provided for Streamlit Community Cloud and Docker. No public deployment is performed automatically; verify your hosted URL using [DEPLOYMENT.md](DEPLOYMENT.md). Session progress is not permanent storage, and free-host resource limits still apply.

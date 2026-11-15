@@ -29,6 +29,7 @@ def main():
     metadata.update(sha256=hashlib.sha256(RAW.read_bytes()).hexdigest(),
                     prepared_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                     mena_shape=dict(monthly.sizes))
+    RAW.with_suffix('.json').write_text(json.dumps(metadata, indent=2, default=str)+'\n')
     processed = ROOT / 'data/processed'
     processed.mkdir(parents=True, exist_ok=True)
     monthly.to_dataset(name='precip_mm').to_netcdf(processed / 'mena_monthly.nc')
