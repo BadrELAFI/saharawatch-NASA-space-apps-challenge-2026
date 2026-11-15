@@ -260,3 +260,9 @@ Run `python scripts/browser_improvements_smoke.py` against the local app to veri
 Temperature integration is point-based, not a regional temperature map or national aggregation. Country summaries still use coarse GPCP cell values and generalized Natural Earth boundaries, even with fractional areas. MK supplies no autocorrelation-adjusted slope CI. SPI remains a selected-series calculation. Interpretations remain deterministic; no paid or local language model is required. These scientific scope limits are explicit in the interface and are not substituted with synthetic observations.
 
 Deployment configuration is provided for Streamlit Community Cloud and Docker. No public deployment is performed automatically; verify your hosted URL using [DEPLOYMENT.md](DEPLOYMENT.md). Session progress is not permanent storage, and free-host resource limits still apply.
+
+## License and security
+
+SaharaWatch's original code and documentation are licensed under the [MIT License](LICENSE), copyright 2026 Badr Elafi. Bundled third-party datasets, imagery and dependencies retain their respective terms and attribution; see [NOTICE.md](NOTICE.md) and the provenance documents under `data/`. No NASA or NOAA endorsement is implied.
+
+See [SECURITY.md](SECURITY.md) for private vulnerability reporting, publication privacy and deployment guidance. CI checks Git history for secrets and audits Python dependencies; Dependabot proposes dependency updates for review. GitHub's secret scanning, push protection and private-reporting settings must be enabled separately by a repository administrator.

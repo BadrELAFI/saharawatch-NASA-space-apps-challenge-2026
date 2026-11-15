@@ -13,3 +13,10 @@ data/processed
 data/raw/power
 data/raw/satellite
 *.part
+**/.env
+**/.env.*
+**/.streamlit/secrets.toml
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx

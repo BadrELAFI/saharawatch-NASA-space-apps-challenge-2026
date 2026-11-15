@@ -11,3 +11,8 @@ data/raw/satellite/
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+**/.streamlit/secrets.toml
