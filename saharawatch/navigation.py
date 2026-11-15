@@ -2,7 +2,7 @@
 import streamlit as st
 
 
-WORKSPACES = ['01 / Evidence atlas','Satellite images','02 / Cross-examine','03 / Case files',
+WORKSPACES = ["Detective's desk",'01 / Evidence atlas','Satellite images','02 / Cross-examine','03 / Case files',
               '04 / Field notebook','05 / The science','06 / Rainfall deficits & SPI']
 
 

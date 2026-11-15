@@ -17,6 +17,7 @@ import streamlit as st
 from .data import ROOT, grid_series
 from .plots import style, CYAN, AMBER
 from .satellite_source import imagery_availability, comparison_dates, fetch_comparison, PLATFORMS
+from .exhibits import exhibit
 
 ASSETS = ROOT/'assets/satellite-comparison'
 PAIR = ROOT/'data/satellite'
@@ -218,7 +219,8 @@ def render_satellite_comparison(monthly, metadata):
     show_grid = st.session_state.get('satellite_show_grid', False)
     images = [dict(image, src=('data:image/png;base64,' if payload.startswith(b'\x89PNG') else 'data:image/jpeg;base64,')+base64.b64encode(payload).decode())
               for image, payload in zip(manifest['images'], payloads, strict=True)]
-    comparison_component(data=dict(images=images, position=position, show_grid=show_grid,
+    with exhibit('PHOTOGRAPHIC EVIDENCE',before['date']+' / '+after['date'],'satellite_photos',kind='photographs'):
+        comparison_component(data=dict(images=images, position=position, show_grid=show_grid,
                                    grid_svg=rainfall_cell_overlay(monthly.lat.values, monthly.lon.values, manifest['bbox'])),
                          default=dict(position=position, show_grid=show_grid), key='satellite_comparison',
                          on_position_change=_save_comparison, on_show_grid_change=_save_comparison,
@@ -240,7 +242,8 @@ def render_satellite_comparison(monthly, metadata):
     st.caption(f'Nearest GPCP cell to Casablanca · center {cell[0]:.2f}° N, {cell[1]:.2f}° E · '
                '2.5° × 2.5° support. This is a coarse grid-cell record, not a city measurement. '
                'Use the image controls above to change comparison dates. Rainfall filters in the sidebar do not change them.')
-    st.plotly_chart(figure, width='stretch', theme=None, key='satellite_rainfall')
+    with exhibit('FIELD RECORD', 'Rainfall around the acquisition dates','satellite_rainfall'):
+        st.plotly_chart(figure, width='stretch', theme=None, key='satellite_rainfall')
     columns = st.columns(2)
     for index, row in enumerate(summary):
         value = f'{row["precipitation_mm"]:.1f} mm' if row['precipitation_mm'] is not None else 'Unavailable'

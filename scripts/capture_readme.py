@@ -12,6 +12,7 @@ with sync_playwright() as p:
                              args=['--no-sandbox','--enable-unsafe-swiftshader'])
     page=browser.new_page(viewport={'width':1550,'height':1450})
     page.goto(os.environ.get('SAHARAWATCH_TEST_URL','http://localhost:8501'))
+    page.get_by_role('button',name='Explore rainfall',exact=True).click(timeout=60000)
     page.get_by_role('heading',name='The curious case of the missing rain.',exact=True).wait_for(timeout=60000)
     page.wait_for_function("document.querySelector('.js-plotly-plot')?._fullLayout?.map?._subplot?.map?.loaded()",timeout=60000)
     page.screenshot(path=str(ROOT/'assets/dashboard.png'),full_page=True)

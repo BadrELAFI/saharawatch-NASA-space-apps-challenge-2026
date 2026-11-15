@@ -23,6 +23,7 @@ SNAPSHOT = """() => {
 
 def open_playback(page):
     page.goto(os.environ.get('SAHARAWATCH_TEST_URL', 'http://localhost:8501'))
+    page.get_by_role('button',name='Explore rainfall',exact=True).click(timeout=60000)
     page.get_by_text('Open the rainfall time machine', exact=True).click(timeout=60000)
     element = page.locator('iframe[title="Animated rainfall map and synchronized location timeline"]')
     element.wait_for(timeout=60000)

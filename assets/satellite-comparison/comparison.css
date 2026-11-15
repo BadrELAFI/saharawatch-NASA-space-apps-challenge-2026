@@ -1,4 +1,6 @@
 .satellite-comparison-root {font:14px Georgia,serif;color:#253b32;max-width:900px;margin:auto;}
+.satellite-comparison-root {box-sizing:border-box;width:100%;max-width:940px;padding:14px 14px 18px;background:#f0e7d2;border:7px solid #e8dcc1;box-shadow:2px 5px 12px #30251b45;}
+.satellite-frame {outline:3px solid #354034;outline-offset:0;}
 .satellite-frame {--reveal:50%;position:relative;aspect-ratio:1;overflow:hidden;border:1px solid #8f7b56;border-radius:4px;background:#253b32;touch-action:pan-y;cursor:ew-resize;}
 .satellite-frame img {position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;}
 .satellite-before {z-index:2;clip-path:inset(0 calc(100% - var(--reveal)) 0 0);}

@@ -16,7 +16,8 @@ from .guided import render_live_investigation
 from .plots import history_figure
 from .satellite import load_satellite_pair, active_satellite_pair, rainfall_context, restore_satellite_controls
 from .navigation import activate_workspace
-from .case_folders import folder_markup
+from .case_folders import render_folders
+from .exhibits import exhibit, filed_stamp
 
 PATHS = ['Answer the quiz', 'Investigate on your own']
 
@@ -105,7 +106,8 @@ def render_quiz(key, annual, monthly, countries, metadata, years, start, end, bs
             for col, image, encoded in zip(st.columns(2), context['satellite_manifest']['images'], context['image_previews']):
                 col.image(base64.b64decode(encoded), caption=f'{image["date"]} · {image["platform"]} MODIS', width='stretch')
         if clue['chart']:
-            st.plotly_chart(go.Figure(json.loads(clue['chart'])), width='stretch', theme=None, key=prefix+f'chart_{step}')
+            with exhibit(f'EXHIBIT {step+1:02d}',clue['title'],prefix+f'exhibit_{step}'):
+                st.plotly_chart(go.Figure(json.loads(clue['chart'])), width='stretch', theme=None, key=prefix+f'chart_{step}')
         if clue['evidence']:
             st.write(clue['evidence'])
         answered = len(attempt['answers']) > step
@@ -139,6 +141,7 @@ def render_quiz(key, annual, monthly, countries, metadata, years, start, end, bs
     else:
         st.session_state.setdefault('completed_quizzes', {})[key] = copy.deepcopy(attempt)
         score = sum(answer['correct'] for answer in attempt['answers'])
+        filed_stamp()
         st.success(f'Case complete · {score} / 3 answers matched the evidence on the first try.')
         st.write('Your first hypothesis: **'+attempt['prediction']+'**')
         st.write('What would you revise now? A thoughtful change of mind is part of an investigation.')
@@ -285,6 +288,7 @@ def render_mission(key, annual, monthly, countries, metadata, years, start, end,
             completion_note='Required investigation steps recorded; the written conclusion has not been automatically graded.'))
     saved = st.session_state.get('saved_missions', {}).get(key)
     if saved:
+        filed_stamp('INVESTIGATION FILED')
         st.success('Investigation saved in this session. Download it to keep the evidence and your reasoning.')
         st.download_button('Download investigation · JSON', json.dumps(saved, indent=2, allow_nan=False),
                            file_name=f'saharawatch_case_{CASES[key]["number"]}_investigation.json',
@@ -314,13 +318,7 @@ def render_case_library(annual, monthly, countries, metadata, years, start, end,
     st.caption(f'Your session: {len(solved)}/6 quizzes completed · {len(saved)}/6 investigations saved. '
                'Progress is session-only; a fresh investigation clears it.')
     with st.expander('Browse all six cases',expanded=True):
-        with st.container(key='case_desk'):
-            st.html('<div class="desk-heading"><span>THE DETECTIVE’S DESK / OPEN CASES</span><em>Pick a folder. Follow the evidence.</em></div>')
-            columns = st.columns(2,gap='large')
-            for index, key in enumerate(CASES):
-                with columns[index % 2].container(key='file_case_'+key):
-                    st.html(folder_markup(key,key == selected,key in solved,key in saved))
-                    st.button('Open '+case_title(key), key='preset_'+key,on_click=preset,args=(key,),width='stretch')
+        render_folders(selected,solved,saved,preset)
     st.markdown('### '+case_title(selected))
     st.write(case['question'])
     if path == PATHS[0]:

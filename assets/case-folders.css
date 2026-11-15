@@ -1,5 +1,5 @@
 /* The desk and stains are decoration; all actions remain native keyboard-accessible buttons. */
-.st-key-case_desk {
+:is(.st-key-case_desk,.st-key-landing_files) {
   padding:28px 26px 14px;border:1px solid #3f3024;border-radius:5px;
   background-color:#624733;
   background-image:radial-gradient(ellipse at 20% 0%,#c2a07933,transparent 60%),
@@ -9,7 +9,7 @@
 }
 .desk-heading {display:flex;justify-content:space-between;gap:12px;padding:0 2px 12px;color:#ead6b1;font:11px 'Courier New',monospace;letter-spacing:1px;}
 .desk-heading em {font:italic 14px Georgia,serif;color:#dfc29b;letter-spacing:0;}
-.st-key-case_desk [class*="st-key-file_case_"] {position:relative;isolation:isolate;margin:12px 0 20px;}
+:is(.st-key-case_desk,.st-key-landing_files) [class*="st-key-file_case_"] {position:relative;isolation:isolate;margin:12px 0 20px;}
 .file-folder {--tilt:-1.1deg;--paper:#cfb176;position:relative;height:294px;margin:8px 4px 22px;perspective:1100px;transform:rotate(var(--tilt));transition:transform .25s;pointer-events:none;}
 .folder-back {position:absolute;inset:6px 0 0;background:linear-gradient(115deg,#b79558,#d5b77f 60%,#b89761);border:1px solid #957342;border-radius:3px 6px 5px 3px;box-shadow:2px 8px 13px #190e0a55;}
 .folder-tab {position:absolute;left:16px;top:-23px;padding:7px 20px 5px;background:#c7a66b;border:1px solid #967541;border-bottom:0;border-radius:7px 13px 0 0;font:bold 11px 'Courier New',monospace;letter-spacing:1px;color:#4d3d29;box-shadow:inset 0 2px 3px #f4e0b344;}
@@ -46,12 +46,12 @@
 .file-folder.is-open .folder-back {box-shadow:0 0 0 2px #e8cea480,3px 8px 18px #170d0966;}
 .folder-variant-1 {--tilt:1.25deg;--paper:#c3a374;}.folder-variant-2 {--tilt:.6deg;--paper:#d0b27b;}.folder-variant-3 {--tilt:-.8deg;--paper:#bea579;}.folder-variant-4 {--tilt:-1.5deg;--paper:#d4b784;}.folder-variant-5 {--tilt:1deg;--paper:#c3aa7c;}
 .folder-variant-1 .coffee-ring {top:124px;right:125px;opacity:.7;}.folder-variant-2 .coffee-ring {right:9px;top:114px;transform:scale(.8) rotate(-15deg);}.folder-variant-3 .coffee-ring {top:12px;right:24px;opacity:.55;}.folder-variant-4 .coffee-ring {top:118px;right:20px;transform:scale(1.14) rotate(-7deg);}.folder-variant-5 .coffee-ring {top:30px;right:35px;opacity:.7;}
-.st-key-case_desk [class*="st-key-preset_"] {position:absolute!important;inset:0!important;z-index:10;width:100%!important;height:100%!important;}
-.st-key-case_desk [class*="st-key-preset_"] [data-testid="stButton"],.st-key-case_desk [class*="st-key-preset_"] button {width:100%;height:100%;}
-.st-key-case_desk [class*="st-key-preset_"] button {opacity:0;cursor:pointer;}
-.st-key-case_desk [class*="st-key-file_case_"]:has(button:hover) .file-folder {transform:translateY(-5px) rotate(0deg);}
-.st-key-case_desk [class*="st-key-file_case_"]:has(button:focus-visible) .file-folder {outline:3px solid #f9e4af;outline-offset:8px;border-radius:4px;}
+:is(.st-key-case_desk,.st-key-landing_files) :is([class*="st-key-preset_"],[class*="st-key-desk_open_"]) {position:absolute!important;inset:0!important;z-index:10;width:100%!important;height:100%!important;}
+:is(.st-key-case_desk,.st-key-landing_files) :is([class*="st-key-preset_"],[class*="st-key-desk_open_"]) [data-testid="stButton"],:is(.st-key-case_desk,.st-key-landing_files) :is([class*="st-key-preset_"],[class*="st-key-desk_open_"]) button {width:100%;height:100%;}
+:is(.st-key-case_desk,.st-key-landing_files) :is([class*="st-key-preset_"],[class*="st-key-desk_open_"]) button {opacity:0;cursor:pointer;}
+:is(.st-key-case_desk,.st-key-landing_files) [class*="st-key-file_case_"]:has(button:hover) .file-folder {transform:translateY(-5px) rotate(0deg);}
+:is(.st-key-case_desk,.st-key-landing_files) [class*="st-key-file_case_"]:has(button:focus-visible) .file-folder {outline:3px solid #f9e4af;outline-offset:8px;border-radius:4px;}
 @keyframes file-folder-open {from{transform:rotateX(0)}to{transform:rotateX(-80deg)}}
-@media(max-width:800px) {.st-key-case_desk {padding:24px 16px 12px;}.folder-title{font-size:22px;}.folder-cover{padding:21px 19px 16px;}.sheet-main{padding:15px;}.sheet-title{font-size:19px;}}
+@media(max-width:800px) {:is(.st-key-case_desk,.st-key-landing_files) {padding:24px 16px 12px;}.folder-title{font-size:22px;}.folder-cover{padding:21px 19px 16px;}.sheet-main{padding:15px;}.sheet-title{font-size:19px;}}
 @media(max-width:480px) {.file-folder{height:293px;margin-left:0;margin-right:0;}.desk-heading{flex-direction:column;gap:4px;}.folder-title{max-width:95%;font-size:24px;}.folder-stamp{right:14px;}.folder-bureau{font-size:8px;}}
 @media(prefers-reduced-motion:reduce) {.file-folder,.folder-cover,.folder-open-label{animation:none!important;transition:none!important;}}

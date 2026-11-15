@@ -12,6 +12,7 @@ with sync_playwright() as p:
     errors=[]
     page.on('pageerror',lambda error:errors.append(str(error)))
     page.goto(os.environ.get('SAHARAWATCH_TEST_URL', 'http://localhost:8501'))
+    page.get_by_role('button',name='Explore rainfall',exact=True).click(timeout=60000)
     page.get_by_role('heading',name='The curious case of the missing rain.').wait_for(timeout=60000)
     page.locator('.js-plotly-plot').first.wait_for(timeout=60000)
     page.wait_for_function("document.querySelector('.js-plotly-plot')?._fullLayout?.map?._subplot?.map?.loaded()",timeout=60000)
@@ -56,6 +57,7 @@ with sync_playwright() as p:
     mobile=browser.new_page(viewport={'width':390,'height':844},device_scale_factor=1,is_mobile=True,has_touch=True)
     mobile.on('pageerror',lambda error:errors.append(str(error)))
     mobile.goto(os.environ.get('SAHARAWATCH_TEST_URL', 'http://localhost:8501'))
+    mobile.get_by_role('button',name='Explore rainfall',exact=True).click(timeout=60000)
     mobile.get_by_role('heading',name='The curious case of the missing rain.').wait_for(timeout=60000)
     mobile.wait_for_function("document.querySelector('.js-plotly-plot')?._fullLayout?.map?._subplot?.map?.loaded()",timeout=60000)
     assert mobile.locator('[data-testid="stException"]').count()==0

@@ -15,6 +15,8 @@ from saharawatch.reports import build_report_archive
 from saharawatch.case_library import render_case_library, choose_case
 from saharawatch.satellite import render_satellite_comparison, restore_satellite_controls
 from saharawatch.navigation import WORKSPACES, activate_workspace
+from saharawatch.desk import render_desk, render_effects
+from saharawatch.exhibits import exhibit
 from saharawatch.comparison import render_comparison
 from saharawatch.trend_diagnostics import render_trend_diagnostics
 from saharawatch.drought import anomaly_statistics
@@ -26,20 +28,21 @@ import plotly.graph_objects as go
 st.set_page_config(page_title='SaharaWatch · The Climate Detective Bureau',page_icon='🔎',layout='wide')
 st.html(f'<style>{(ROOT / "assets/styles.css").read_text()}</style>')
 st.html(f'<style>{(ROOT / "assets/case-folders.css").read_text()}</style>')
+st.html(f'<style>{(ROOT / "assets/office/office.css").read_text()}</style>')
 
 
-@st.cache_data(show_spinner='Reading and validating real GPCP precipitation…')
+@st.cache_data(show_spinner='Reading and validating real GPCP precipitation…',max_entries=2)
 def cached_data(stamp):
     return load_data()
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False,max_entries=12)
 def cached_trends(stamp, start, end, _annual, method='OLS'):
     # File identity and selected years fully identify the excluded xarray argument.
     return inference_grid(_annual,method)
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False,max_entries=32)
 def cached_mask(lat, lon, feature, weighting):
     import xarray as xr
     grid = xr.DataArray(np.zeros((len(lat),len(lon))),dims=('lat','lon'),coords={'lat':lat,'lon':lon})
@@ -110,6 +113,13 @@ def preset(name):
         st.session_state['indicator']='Linear trend'
 
 
+def open_desk_case(name):
+    st.session_state['last_open_folder']=name
+    path=st.session_state.get('case_path',st.session_state.get('library_preferences',{}).get('path','Answer the quiz'))
+    preset(name)
+    choose_case(name,path)
+
+
 try:
     file_stamp = (RAW.stat().st_mtime_ns, RAW.stat().st_size) if RAW.exists() else None
     monthly, annual, metadata = cached_data(file_stamp)
@@ -126,12 +136,15 @@ country_names = sorted(countries)
 default_period = (2001,2024) if 2001 in years and 2024 in years else (years[0],years[-1])
 default_baseline = (2001,2020) if 2001 in years and 2020 in years else (years[0],years[-1])
 indicators = ['Mean annual rainfall','Linear trend','Relative trend','Annual anomaly','Relative anomaly','Standardized anomaly','Trend significance']
+current_workspace=st.session_state.get('workspace_tab',WORKSPACES[0])
+st.html(f'<div class="scene-marker" data-scene="{"desk" if current_workspace == WORKSPACES[0] else "evidence"}"></div>')
 with st.sidebar:
     st.html('<div class="brand"><i class="brand-symbol"></i> Sahara<span>Watch</span></div><p class="eyebrow">Climate Detective Bureau</p>')
     st.divider()
+    desk_sounds=st.toggle('Desk sounds',value=False,key='desk_sounds',help='Optional quiet paper, pencil and stamp sounds. Muted until you turn them on.')
     if st.session_state.get('workspace_tab') == 'Satellite images':
         st.caption('Set image years in the main panel. Rainfall controls apply to the other workspaces.')
-    with st.expander('Rainfall controls',expanded=st.session_state.get('workspace_tab') != 'Satellite images'):
+    with st.expander('Rainfall controls',expanded=current_workspace not in ('Satellite images',WORKSPACES[0])):
         st.caption('01 / MARK THE SCENE')
         mode = st.radio('Selection mode',['Grid cell','Country aggregation'] if countries else ['Grid cell'],key='mode',horizontal=True)
         feature = None
@@ -161,11 +174,13 @@ with st.sidebar:
     st.caption(f'RAINFALL DATA · GPCP\n\n{metadata["start"][:7]} → {metadata["end"][:7]}\n\nAnnual analysis excludes incomplete years.')
     st.markdown('[Dataset & attribution ↗](https://psl.noaa.gov/data/gridded/data.gpcp.html)')
 
-st.caption('START HERE · Choose what you want to explore')
-entry = st.columns(3)
-entry[0].button('Explore rainfall', key='go_rainfall', on_click=open_workspace, args=('01 / Evidence atlas',), width='stretch')
-entry[1].button('Compare satellite images', key='go_satellite', on_click=open_workspace, args=('Satellite images',), width='stretch')
-entry[2].button('Quizzes & investigations', key='go_cases', on_click=open_workspace, args=('03 / Case files',), width='stretch')
+st.caption('YOUR FIELD OFFICE · Open a case or take out an instrument')
+entry = st.columns(4)
+entry[0].button("Detective's desk",key='go_desk',on_click=open_workspace,args=(WORKSPACES[0],),width='stretch')
+entry[1].button('Explore rainfall', key='go_rainfall', on_click=open_workspace, args=('01 / Evidence atlas',), width='stretch')
+entry[2].button('Compare satellite images', key='go_satellite', on_click=open_workspace, args=('Satellite images',), width='stretch')
+entry[3].button('Quizzes & investigations', key='go_cases', on_click=open_workspace, args=('03 / Case files',), width='stretch')
+render_effects(desk_sounds)
 
 if variable=='t2m':
     if mode=='Country aggregation':
@@ -177,18 +192,22 @@ if variable=='t2m':
     render_temperature(temp_lat,temp_lon,start,end,bstart,bend,alpha,inference_method,monthly)
     st.stop()
 
-st.html("""<section class="hero">
+if current_workspace != WORKSPACES[0]:
+    st.html("""<section class="hero">
 <div><p class="eyebrow">SaharaWatch / The Climate Detective Bureau</p>
 <h1>The curious case<br>of the <em>missing rain.</em></h1>
 <p class="subtitle">Every landscape leaves a clue. Trace the rainfall, question the patterns, and build your case from decades of Earth observations.</p></div>
 <div class="hero-art" aria-hidden="true"><div class="stamp">FIELD OFFICE<br>MENA · EST. 1979</div>
 <div class="detective-lens"><span class="lens-drop"></span><span class="lens-dunes"></span></div><span class="coordinates">18° W — 63° E / 10° N — 43° N<br>FOLLOW THE EVIDENCE.</span></div></section>""")
-if st.session_state.get('workspace_tab') != 'Satellite images':
+if current_workspace not in ('Satellite images',WORKSPACES[0]):
     st.html(f'<span class="source-pill">EVIDENCE SOURCE · GPCP {metadata["version"]} / NOAA PSL</span><span class="source-pill">{start} — {end}</span><span class="source-pill">2.5° × 2.5° · Monthly observations</span>')
 navigation_key='workspace_navigation_'+str(st.session_state.get('workspace_revision',0))
-explorer,satellite,comparison,guided,notebook,methods,deficits = st.tabs(
+desk,explorer,satellite,comparison,guided,notebook,methods,deficits = st.tabs(
     WORKSPACES,default=st.session_state.get('workspace_initial_label',WORKSPACES[0]),
     key=navigation_key,on_change=workspace_changed,args=(navigation_key,))
+if desk.open:
+    with desk:
+        render_desk(open_desk_case,open_workspace)
 if satellite.open:
     with satellite:
         st.caption('SATELLITE WORKSPACE · 1 Choose images → 2 Load your comparison → 3 Drag the divider')
@@ -274,7 +293,8 @@ with explorer:
         period_text = f'{anomaly_year} vs. {bstart}–{bend} baseline'
     figure = map_figure(values,indicator,units,period_text,pvalues=pvalues,selected=selected,
                         feature=feature,diverging=diverging,significance=significance,observed=observed_grid,expected=expected_grid)
-    st.plotly_chart(figure,width='stretch',theme=None,key='map',on_select=select_map_cell,selection_mode='points',config={'scrollZoom':True,'displaylogo':False})
+    with exhibit('FIELD MAP / MENA',indicator,'atlas',kind='map'):
+        st.plotly_chart(figure,width='stretch',theme=None,key='map',on_select=select_map_cell,selection_mode='points',config={'scrollZoom':True,'displaylogo':False})
     st.caption(f'Inference: {inference_method}. P-values test the selected method; FDR correction is separate from autocorrelation treatment.')
     if significance:
         st.caption(f'{correction} at α = {alpha}. Terracotta: significant decrease · parchment: no significant trend detected · green: significant increase. Missing cells are unfilled. Hover shows unadjusted p-values for the selected method; FDR tests all valid cells in the study rectangle, including ocean.')

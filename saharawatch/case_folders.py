@@ -1,7 +1,22 @@
 """Decorative case-file covers; native Streamlit buttons provide the interaction."""
 import html
+import streamlit as st
 
 from .case_catalog import CASES
+
+
+def render_folders(selected, solved, saved, on_select, landing=False):
+    root = 'landing_files' if landing else 'case_desk'
+    with st.container(key=root):
+        st.html('<div class="desk-heading"><span>THE DETECTIVE’S DESK / OPEN CASES</span><em>Pick a folder. Follow the evidence.</em></div>')
+        columns = st.columns(2,gap='large')
+        for index,key in enumerate(CASES):
+            with columns[index % 2].container(key=('file_case_landing_' if landing else 'file_case_')+key):
+                st.html(folder_markup(key,key == selected,key in solved,key in saved))
+                case=CASES[key]
+                st.button(f'Open Case {case["number"]} / {case["title"]}',
+                          key=('desk_open_' if landing else 'preset_')+key,
+                          on_click=on_select,args=(key,),width='stretch')
 
 
 def folder_markup(key, selected, quiz_complete, investigation_saved):
