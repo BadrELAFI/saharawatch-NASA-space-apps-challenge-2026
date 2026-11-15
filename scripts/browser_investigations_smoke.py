@@ -1,6 +1,7 @@
 """Verify Features 5–7 against a running local dashboard."""
 from pathlib import Path
 import csv
+import os
 from io import StringIO
 from playwright.sync_api import sync_playwright
 
@@ -11,7 +12,7 @@ with sync_playwright() as p:
     page=browser.new_page(viewport={'width':1550,'height':1200})
     errors=[]
     page.on('pageerror',lambda e:errors.append(str(e)))
-    page.goto('http://localhost:8501')
+    page.goto(os.environ.get('SAHARAWATCH_TEST_URL','http://localhost:8501'))
     page.get_by_text('Statistical trend diagnostics · Feature 5',exact=True).wait_for(timeout=60000)
     page.get_by_text('Statistical trend diagnostics · Feature 5',exact=True).click()
     with page.expect_download() as download:
@@ -30,13 +31,16 @@ with sync_playwright() as p:
     page.get_by_role('tab',name='03 / Case files',exact=True).click()
     page.get_by_role('heading',name='Explore a Climate Mystery',exact=True).wait_for()
     titles=['Case 001 / Is Morocco becoming drier?','Case 002 / Across the border','Case 003 / The dry-year files','Case 004 / Follow the strongest trail']
+    page.get_by_text('Investigate on your own',exact=True).click()
+    page.get_by_role('textbox',name='Working hypothesis for this case',exact=True).wait_for(timeout=30000)
     for i,title in enumerate(titles):
-        card=page.locator('[data-testid="stVerticalBlock"]').filter(has=page.get_by_role('heading',name=title,exact=True)).last
-        card.get_by_role('button',name='Open this case',exact=True).click()
+        page.get_by_role('combobox',name='Choose a case',exact=True).click()
+        page.get_by_role('option',name=title,exact=True).click()
+        page.get_by_role('heading',name=title,exact=True).filter(visible=True).wait_for(timeout=30000)
         if i==0:
             page.get_by_text('Morocco: ',exact=False).last.wait_for(timeout=30000)
         elif i==1:
-            page.get_by_role('combobox',name='Compare Morocco with',exact=True).wait_for(timeout=30000)
+            page.get_by_role('combobox',name='Comparison country',exact=True).wait_for(timeout=30000)
         elif i==2:
             page.get_by_role('combobox',name='Investigate a historical year',exact=True).wait_for(timeout=30000)
         else:

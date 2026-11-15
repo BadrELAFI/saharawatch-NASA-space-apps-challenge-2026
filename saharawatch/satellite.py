@@ -1,5 +1,7 @@
 """Curated, local satellite evidence with explicit acquisition and rainfall support."""
 import base64
+import calendar
+from datetime import date
 import hashlib
 import io
 import json
@@ -14,6 +16,7 @@ import streamlit as st
 
 from .data import ROOT, grid_series
 from .plots import style, CYAN, AMBER
+from .satellite_source import imagery_availability, comparison_dates, fetch_comparison, PLATFORMS
 
 ASSETS = ROOT/'assets/satellite-comparison'
 PAIR = ROOT/'data/satellite'
@@ -123,42 +126,120 @@ comparison_component = st.components.v2.component(
     css=(ASSETS/'comparison.css').read_text(), js=(ASSETS/'comparison.js').read_text())
 
 
-def render_satellite_comparison(monthly, metadata):
-    st.markdown('### Satellite evidence / A landscape, one year apart')
-    st.write('Look beyond the rainfall chart. Slide between two February views of the Casablanca region, '
-             'then cross-examine the rainfall record below.')
-    if not st.toggle('Open the satellite before/after reveal', key='satellite_enabled'):
-        return
+def active_satellite_pair():
+    return st.session_state.get('satellite_active_pair') or load_satellite_pair()
+
+
+def remember_satellite_preferences():
+    preferences = st.session_state['satellite_preferences']
+    for field in preferences:
+        if 'satellite_'+field in st.session_state:
+            preferences[field] = st.session_state['satellite_'+field]
+
+
+def restore_satellite_controls():
+    """Restore committed form values before remounting this workspace's widgets."""
+    for field,value in st.session_state.get('satellite_preferences',{}).items():
+        st.session_state['satellite_'+field] = value
+
+
+def choose_satellite_pair():
+    preferences = st.session_state.setdefault('satellite_preferences', dict(mode='Recommended example',platform='Terra',
+        before_year=2023,after_year=2024,month=2,day=19))
+    for field,value in preferences.items():
+        st.session_state.setdefault('satellite_'+field,value)
+    modes = ['Recommended example', 'Choose years']
+    mode = st.radio('Choose images', modes, index=modes.index(preferences['mode']), horizontal=True,
+                    key='satellite_mode',on_change=remember_satellite_preferences)
+    if mode == 'Recommended example':
+        st.caption('Start with two visually reviewed February views: 2023 versus 2024. No download is needed.')
+        return load_satellite_pair()
+    existing = st.session_state.get('satellite_custom_pair') or load_satellite_pair()
+    platform = st.selectbox('Satellite for both images', PLATFORMS, index=PLATFORMS.index(preferences['platform']), key='satellite_platform',
+                            help='Using the same satellite makes the comparison more consistent.',on_change=remember_satellite_preferences)
     try:
-        manifest, payloads = load_satellite_pair()
+        with st.spinner('Checking which image dates NASA provides…'):
+            availability = imagery_availability(platform)
+    except (ValueError, OSError) as exc:
+        st.warning(str(exc))
+        st.caption('Your displayed comparison is unchanged. Use the recommended example to explore without a connection.')
+        return existing
+    first, last = date.fromisoformat(availability['first']), date.fromisoformat(availability['last'])
+    years = list(range(first.year, last.year+1))
+    before_default = max(years[0],min(years[-1],preferences['before_year']))
+    after_default = max(years[0],min(years[-1],preferences['after_year']))
+    for field,default in [('before_year',before_default),('after_year',after_default)]:
+        if st.session_state['satellite_'+field] not in years:
+            st.session_state['satellite_'+field] = default
+    st.caption(f'{platform} MODIS record: {first:%d %b %Y}–{last:%d %b %Y}. '
+               'Choose the same month and day in two different years to limit seasonal differences.')
+    if availability.get('stale'):
+        st.caption('Using the last saved date catalogue because NASA is currently unreachable. Previously downloaded images remain available.')
+    with st.form('satellite_year_form'):
+        before, after = st.columns(2)
+        before_year = before.selectbox('Before year', years, index=years.index(before_default), key='satellite_before_year')
+        after_year = after.selectbox('After year', years, index=years.index(after_default), key='satellite_after_year')
+        month_col, day_col = st.columns(2)
+        month = month_col.selectbox('Month for both images', list(range(1,13)), index=preferences['month']-1,
+                                     format_func=lambda value:calendar.month_name[value], key='satellite_month')
+        day = day_col.number_input('Day of month', 1, 31, preferences['day'], key='satellite_day')
+        submitted = st.form_submit_button('Load comparison', type='primary')
+    st.caption('Press Load comparison to apply these controls. Until then, the images below remain your last loaded comparison. '
+               'Dragging the divider does not download imagery.')
+    if submitted:
+        remember_satellite_preferences()
+        try:
+            first_date, last_date = comparison_dates(before_year, after_year, month, day, availability)
+            with st.spinner(f'Loading {first_date:%d %b %Y} and {last_date:%d %b %Y} from NASA…'):
+                existing = fetch_comparison(platform, first_date, last_date, availability)
+            st.session_state['satellite_custom_pair'] = existing
+            st.session_state['satellite_position'] = 50
+            st.session_state.pop('satellite_comparison', None)
+        except (ValueError, OSError) as exc:
+            st.warning(str(exc)+' The images below have not been changed.')
+    return existing
+
+
+def render_satellite_comparison(monthly, metadata):
+    st.subheader('Compare satellite images')
+    st.write('Explore the Casablanca region from space. Start with the example or choose two years, '
+             'then drag the divider to see what changed.')
+    try:
+        manifest, payloads = choose_satellite_pair()
     except (OSError, ValueError, KeyError, TypeError) as exc:
-        st.error(f'Satellite evidence is unavailable: {exc}. Restore data/satellite from the project checkout.')
+        st.error(f'The satellite example could not be opened: {exc}. Restore data/satellite from the project checkout.')
         return
-    st.caption('BEFORE · 12 February 2023 · Aqua MODIS   /   AFTER · 19 February 2024 · Terra MODIS')
+    st.session_state['satellite_active_pair'] = (manifest, payloads)
+    before, after = manifest['images']
+    st.markdown(f'**Showing: {before["date"]} ({before["platform"]}) → {after["date"]} ({after["platform"]})**')
     st.caption('Drag the divider, tap a point on the image, or focus the slider and use the arrow keys. '
                'North is up; both views show the same 9–6° W, 31–34° N extent.')
     position = st.session_state.get('satellite_position', 50)
     show_grid = st.session_state.get('satellite_show_grid', False)
-    images = [dict(image, src='data:image/jpeg;base64,'+base64.b64encode(payload).decode())
+    images = [dict(image, src=('data:image/png;base64,' if payload.startswith(b'\x89PNG') else 'data:image/jpeg;base64,')+base64.b64encode(payload).decode())
               for image, payload in zip(manifest['images'], payloads, strict=True)]
     comparison_component(data=dict(images=images, position=position, show_grid=show_grid,
                                    grid_svg=rainfall_cell_overlay(monthly.lat.values, monthly.lon.values, manifest['bbox'])),
                          default=dict(position=position, show_grid=show_grid), key='satellite_comparison',
                          on_position_change=_save_comparison, on_show_grid_change=_save_comparison,
                          height='content')
-    st.caption('NASA GIBS / Aqua and Terra MODIS · True-color browse imagery · '
+    st.caption(manifest['credit']+' · True-color browse imagery · '
                'Same season, different dates and satellite overpass conditions. Clouds, haze and snow remain visible.')
-    st.write('The earlier view appears greener across parts of the coastal plain. Treat that as a visual clue: '
-             'these images do not measure vegetation health, reservoir volume, or rainfall, and do not establish what caused the difference.')
+    st.write('What differences do you notice? Treat them as visual clues. Images alone do not measure '
+             'vegetation health, reservoir volume or rainfall, or establish what caused a change.')
+    for image in manifest['images']:
+        if 'valid_image_area_pct' in image and image['valid_image_area_pct'] < 99.9:
+            st.caption(f'{image["date"]}: {image["valid_image_area_pct"]:.1f}% of the image area has pixels. '
+                       'Blank areas contain no imagery; this percentage does not measure cloud-free coverage.')
     try:
         frame, summary, figure, cell = rainfall_context(monthly, manifest)
     except ValueError as exc:
         st.warning(f'The satellite images remain available, but rainfall context could not be prepared: {exc}')
-        return
+        return manifest, payloads
     st.markdown('#### Follow the rainfall evidence')
     st.caption(f'Nearest GPCP cell to Casablanca · center {cell[0]:.2f}° N, {cell[1]:.2f}° E · '
                '2.5° × 2.5° support. This is a coarse grid-cell record, not a city measurement. '
-               'Sidebar country, analysis period and baseline do not change this curated comparison.')
+               'Use the image controls above to change comparison dates. Rainfall filters in the sidebar do not change them.')
     st.plotly_chart(figure, width='stretch', theme=None, key='satellite_rainfall')
     columns = st.columns(2)
     for index, row in enumerate(summary):
@@ -174,14 +255,15 @@ def render_satellite_comparison(monthly, metadata):
     with st.expander('Image sources, alignment & scientific limits'):
         st.write(manifest['limits'])
         st.write(manifest['review'])
-        st.markdown(f'[NASA’s published comparison]({manifest["context_url"]}) · '
+        st.markdown(f'[NASA image context]({manifest["context_url"]}) · '
                     f'[NASA GIBS documentation]({manifest["documentation_url"]})')
         for image in manifest['images']:
             st.markdown(f'[{image["date"]} · {image["platform"]} MODIS · original GIBS request]({image["url"]})')
             st.caption('SHA-256: '+image['sha256'])
         st.caption(f'Identical EPSG:4326 extent and {manifest["width"]} × {manifest["height"]} output pixels. '
-                   'Output pixels do not imply finer sensor resolution. Images are bundled locally; no imagery requests run on interaction.')
+                   'Output pixels do not imply finer sensor resolution. The example is bundled; custom downloads are cached locally.')
     st.download_button('Download satellite evidence · ZIP',
                        evidence_archive(manifest, payloads, frame, summary, cell, metadata),
                        file_name='saharawatch_satellite_evidence.zip', mime='application/zip',
                        key='satellite_download', on_click='ignore')
+    return manifest, payloads

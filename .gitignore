@@ -5,3 +5,4 @@ data/raw/*.nc
 data/processed/
 *.part
 data/raw/power/
+data/raw/satellite/

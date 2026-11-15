@@ -137,7 +137,7 @@ export default function({data, parentElement, setStateValue}) {
         grip.append(eyebrow, el('h4', '', card.location), el('div', 'card-period', card.period));
         node.append(grip, el('p', 'card-hypothesis', card.hypothesis));
         node.append(sparkline(Array.isArray(card.annual_data) ? card.annual_data : []));
-        const mystery = card.evidence_kind === 'playable mystery';
+        const mystery = ['playable mystery', 'case investigation'].includes(card.evidence_kind);
         node.append(el('p', 'card-stat', mystery ? card.status : `${card.trend_mm_decade} mm/decade · p = ${card.p_value}`));
         node.append(el('p', 'card-assessment', card.assessment));
         const details = el('details', 'card-details'); details.append(el('summary', '', 'Notes, uncertainty & source'));

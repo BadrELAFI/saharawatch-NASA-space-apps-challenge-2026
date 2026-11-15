@@ -1,6 +1,8 @@
 export default function({data, parentElement, setStateValue}) {
     const root = parentElement.querySelector('.satellite-comparison-root');
     root.replaceChildren();
+    root.dataset.savedPosition = String(data.position);
+    root.dataset.savedGrid = String(data.show_grid);
     const make = (tag, className, text) => {
         const node = document.createElement(tag);
         node.className = className;
@@ -69,5 +71,11 @@ export default function({data, parentElement, setStateValue}) {
         if (!frame.hasPointerCapture(event.pointerId)) return;
         revealAt(event); frame.releasePointerCapture(event.pointerId);
         setStateValue('position', Number(slider.value));
+    };
+    if (parentElement._satelliteFocus === 'slider') slider.focus({preventScroll:true});
+    if (parentElement._satelliteFocus === 'grid') gridToggle.focus({preventScroll:true});
+    return () => {
+        const active = parentElement.activeElement;
+        parentElement._satelliteFocus = active === slider ? 'slider' : active === gridToggle ? 'grid' : null;
     };
 }

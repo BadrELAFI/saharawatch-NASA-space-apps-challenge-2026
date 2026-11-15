@@ -55,51 +55,29 @@ def test_mystery_uses_observations_and_preserves_missing_data(recent, expected):
 
 
 @pytest.mark.skipif(not RAW.exists(), reason='Requires downloaded GPCP')
-def test_playable_case_gates_reveals_pins_frozen_evidence_and_restarts():
+def test_recent_rainfall_quiz_preserves_calculated_deficit_and_pins():
     at = AppTest.from_file(ROOT/'app.py').run(timeout=30)
+    at.selectbox(key='library_case').set_value('recent').run(timeout=30)
+    at.text_input(key='quiz_recent_prediction').set_value('I need more evidence')
+    next(b for b in at.button if b.label == 'Open quiz').click().run(timeout=30)
     assert not at.exception
-    assert not any(e.key.startswith('mystery_chart') for e in at.get('plotly_chart'))
-    open_button = lambda: next(b for b in at.button if b.label == 'Break the seal & reveal clue 1')
-    open_button().click().run(timeout=30)
-    assert 'mystery_case' not in at.session_state
-    at.radio(key='mystery_prediction').set_value('No three-year rainfall deficit')
-    open_button().click().run(timeout=30)
-    assert not at.exception
-    case = copy.deepcopy(at.session_state['mystery_case'])
-    assert case['assessment']['status'] == 'Persistent rainfall deficit'
-    assert [e.key for e in at.get('plotly_chart') if e.key.startswith('mystery_chart')] == ['mystery_chart_1']
-    at.button(key='mystery_pin_1').click().run(timeout=30)
-    assert not at.exception
-    at.button(key='mystery_pin_1').click().run(timeout=30)
-    assert len(at.session_state['clues']) == 1
-    assert at.session_state['clues'][0]['status'] == 'The annual record'
-    # Later sidebar edits preserve the case, including its reference climate.
+    original = copy.deepcopy(at.session_state['case_attempts']['recent']['context'])
+    assert original['recent_assessment']['status'] == 'Persistent rainfall deficit'
     at.slider(key='baseline').set_range(1981, 2010).run(timeout=30)
-    at.slider(key='period').set_range(1991, 2020).run(timeout=30)
-    assert at.session_state['mystery_case']['charts'] == case['charts']
-    assert at.session_state['mystery_case']['baseline'] == '2001–2020'
-    for stage in (2, 3):
-        at.button(key='mystery_next').click().run(timeout=30)
+    assert at.session_state['case_attempts']['recent']['context'] == original
+    for step in range(3):
+        clue = original['clues'][step]
+        assert at.button(key='quiz_recent_next').disabled
+        at.radio(key=f'quiz_recent_choice_{step}').set_value(clue['correct'])
+        next(b for b in at.button if b.label == 'Check my answer').click().run(timeout=30)
         assert not at.exception
-        assert f'mystery_chart_{stage}' in [e.key for e in at.get('plotly_chart')]
-        at.button(key=f'mystery_pin_{stage}').click().run(timeout=30)
-    assert len(at.session_state['clues']) == 3
-    at.button(key='mystery_next').click().run(timeout=30)
-    submit = lambda: next(b for b in at.button if b.label == 'Submit verdict & unseal the assessment')
-    submit().click().run(timeout=30)
-    assert at.session_state['mystery_stage'] == 4
-    at.radio(key='mystery_verdict').set_value('No multi-year rainfall deficit')
-    submit().click().run(timeout=30)
+        at.button(key=f'quiz_recent_pin_{step}').click().run(timeout=30)
+        at.button(key='quiz_recent_next').click().run(timeout=30)
     assert not at.exception
-    assert at.session_state['mystery_stage'] == 5
-    assert any('revising a hypothesis' in e.value for e in at.info)
-    at.button(key='mystery_back').click().run(timeout=30)
-    at.radio(key='mystery_verdict').set_value('Persistent rainfall deficit')
-    submit().click().run(timeout=30)
-    assert any('Your verdict matches' in e.value for e in at.success)
-    at.button(key='mystery_restart').click().run(timeout=30)
-    assert not at.exception
-    assert 'mystery_case' not in at.session_state
     assert len(at.session_state['clues']) == 3
-    assert at.radio(key='mystery_prediction').value is None
-    assert '1981–2010' in next(e.value for e in at.caption if 'Sealed envelope' in e.value)
+    assert 'recent' in at.session_state['completed_quizzes']
+    assert all(a['correct'] for a in at.session_state['completed_quizzes']['recent']['answers'])
+    at.button(key='quiz_recent_restart').click().run(timeout=30)
+    assert 'recent' not in at.session_state['case_attempts']
+    assert len(at.session_state['clues']) == 3
+    assert 'recent' in at.session_state['completed_quizzes']

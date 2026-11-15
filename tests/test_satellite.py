@@ -82,11 +82,11 @@ def test_grid_overlay_uses_real_cell_extents_and_archive_keeps_original_images()
 
 
 @pytest.mark.skipif(not RAW.exists(), reason='Requires downloaded GPCP')
-def test_satellite_panel_is_opt_in_and_independent_of_sidebar_settings():
+def test_satellite_workspace_is_direct_and_independent_of_rainfall_filters():
     at = AppTest.from_file(ROOT/'app.py').run(timeout=30)
     assert not at.exception
     assert 'satellite_rainfall' not in [e.key for e in at.get('plotly_chart')]
-    at.toggle(key='satellite_enabled').set_value(True).run(timeout=30)
+    at.button(key='go_satellite').click().run(timeout=30)
     assert not at.exception
     original = [metric.value for metric in at.metric if metric.label.startswith('Six complete months')]
     assert 'satellite_rainfall' in [e.key for e in at.get('plotly_chart')]
@@ -94,6 +94,10 @@ def test_satellite_panel_is_opt_in_and_independent_of_sidebar_settings():
     at.slider(key='baseline').set_range(1981, 2010).run(timeout=30)
     assert not at.exception
     assert [metric.value for metric in at.metric if metric.label.startswith('Six complete months')] == original
-    at.toggle(key='satellite_enabled').set_value(False).run(timeout=30)
+    at.slider(key='baseline').set_range(2001,2005).run(timeout=30)
+    assert not at.exception
+    assert 'satellite_rainfall' in [e.key for e in at.get('plotly_chart')]
+    at.slider(key='baseline').set_range(1981,2010).run(timeout=30)
+    at.button(key='go_cases').click().run(timeout=30)
     assert not at.exception
     assert 'satellite_rainfall' not in [e.key for e in at.get('plotly_chart')]

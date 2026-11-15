@@ -12,9 +12,9 @@ from saharawatch.temperature import render_temperature
 from saharawatch.time_machine import render_time_machine
 from saharawatch.evidence_board import render_evidence_board, clue_id, RELATIONS
 from saharawatch.reports import build_report_archive
-from saharawatch.guided import render_live_investigation
-from saharawatch.mystery import render_playable_mystery
-from saharawatch.satellite import render_satellite_comparison
+from saharawatch.case_library import render_case_library, choose_case
+from saharawatch.satellite import render_satellite_comparison, restore_satellite_controls
+from saharawatch.navigation import WORKSPACES, activate_workspace
 from saharawatch.comparison import render_comparison
 from saharawatch.trend_diagnostics import render_trend_diagnostics
 from saharawatch.drought import anomaly_statistics
@@ -25,6 +25,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title='SaharaWatch · The Climate Detective Bureau',page_icon='🔎',layout='wide')
 st.html(f'<style>{(ROOT / "assets/styles.css").read_text()}</style>')
+st.html(f'<style>{(ROOT / "assets/case-folders.css").read_text()}</style>')
 
 
 @st.cache_data(show_spinner='Reading and validating real GPCP precipitation…')
@@ -78,8 +79,22 @@ def select_briefing_country():
     st.session_state.update(mode='Country aggregation',country=st.session_state['brief_country'])
 
 
+def open_workspace(tab):
+    activate_workspace(tab)
+    st.session_state['variable']='precip'
+    if tab == 'Satellite images':
+        restore_satellite_controls()
+
+
+def workspace_changed(widget_key):
+    st.session_state['workspace_tab']=st.session_state[widget_key]
+    if st.session_state.get('workspace_tab') == 'Satellite images':
+        restore_satellite_controls()
+
+
 def preset(name):
     st.session_state['active_case'] = name
+    st.session_state.update(library_case=name)
     st.session_state.update(mode='Country aggregation' if 'Morocco' in countries else 'Grid cell',
                             country='Morocco',first_country='Morocco',
                             comparison_mode='Countries' if len(countries)>=2 else 'Grid cells')
@@ -114,34 +129,43 @@ indicators = ['Mean annual rainfall','Linear trend','Relative trend','Annual ano
 with st.sidebar:
     st.html('<div class="brand"><i class="brand-symbol"></i> Sahara<span>Watch</span></div><p class="eyebrow">Climate Detective Bureau</p>')
     st.divider()
-    st.caption('01 / MARK THE SCENE')
-    mode = st.radio('Selection mode',['Grid cell','Country aggregation'] if countries else ['Grid cell'],key='mode',horizontal=True)
-    feature = None
-    selected = None
-    weighting=st.selectbox('Country weighting',['Center-point','Fractional area'],key='weighting')
-    if mode == 'Country aggregation':
-        country = st.selectbox('Country',country_names,index=country_names.index('Morocco'),key='country')
-        feature = countries[country]
-        mask = cached_mask(annual.lat.values,annual.lon.values,feature,weighting)
-        st.caption(f'{int((mask>0).sum())} contributing cells · {weighting} weighting')
-    else:
-        lat = st.number_input('Latitude (° N)',min_value=10.,max_value=43.,value=31.25,step=2.5,key='lat')
-        lon = st.number_input('Longitude (° E)',min_value=-18.,max_value=63.,value=-6.25,step=2.5,key='lon')
-    st.divider()
-    st.caption('02 / CHOOSE YOUR LENS')
-    variable=st.selectbox('Environmental variable',list(VARIABLES),format_func=lambda k:VARIABLES[k]['label'],key='variable')
-    inference_method=st.selectbox('Trend inference',METHODS,key='inference_method')
-    indicator = st.selectbox('Map indicator',indicators,key='indicator') if variable=='precip' else 'Mean annual rainfall'
-    start,end = st.slider('Analysis period',years[0],years[-1],default_period,key='period')
-    with st.expander('Baseline & statistical settings',expanded=indicator in ['Annual anomaly','Relative anomaly','Standardized anomaly','Trend significance']):
-        bstart,bend = st.slider('Reference baseline',years[0],years[-1],default_baseline,key='baseline')
-        alpha = st.selectbox('Significance threshold α',[0.01,0.05,0.10],index=1,key='alpha')
-        correction = st.radio('Map significance',['Benjamini–Hochberg FDR','Raw p-values'],key='correction')
-        st.caption('95% slope intervals remain fixed. Baselines and trends each require ≥10 complete years.')
+    if st.session_state.get('workspace_tab') == 'Satellite images':
+        st.caption('Set image years in the main panel. Rainfall controls apply to the other workspaces.')
+    with st.expander('Rainfall controls',expanded=st.session_state.get('workspace_tab') != 'Satellite images'):
+        st.caption('01 / MARK THE SCENE')
+        mode = st.radio('Selection mode',['Grid cell','Country aggregation'] if countries else ['Grid cell'],key='mode',horizontal=True)
+        feature = None
+        selected = None
+        weighting=st.selectbox('Country weighting',['Center-point','Fractional area'],key='weighting')
+        if mode == 'Country aggregation':
+            country = st.selectbox('Country',country_names,index=country_names.index('Morocco'),key='country')
+            feature = countries[country]
+            mask = cached_mask(annual.lat.values,annual.lon.values,feature,weighting)
+            st.caption(f'{int((mask>0).sum())} contributing cells · {weighting} weighting')
+        else:
+            lat = st.number_input('Latitude (° N)',min_value=10.,max_value=43.,value=31.25,step=2.5,key='lat')
+            lon = st.number_input('Longitude (° E)',min_value=-18.,max_value=63.,value=-6.25,step=2.5,key='lon')
+        st.divider()
+        st.caption('02 / CHOOSE YOUR LENS')
+        variable=st.selectbox('Environmental variable',list(VARIABLES),format_func=lambda k:VARIABLES[k]['label'],key='variable')
+        inference_method=st.selectbox('Trend inference',METHODS,key='inference_method')
+        indicator = st.selectbox('Map indicator',indicators,key='indicator') if variable=='precip' else 'Mean annual rainfall'
+        start,end = st.slider('Analysis period',years[0],years[-1],default_period,key='period')
+        with st.expander('Baseline & statistical settings',expanded=indicator in ['Annual anomaly','Relative anomaly','Standardized anomaly','Trend significance']):
+            bstart,bend = st.slider('Reference baseline',years[0],years[-1],default_baseline,key='baseline')
+            alpha = st.selectbox('Significance threshold α',[0.01,0.05,0.10],index=1,key='alpha')
+            correction = st.radio('Map significance',['Benjamini–Hochberg FDR','Raw p-values'],key='correction')
+            st.caption('95% slope intervals remain fixed. Baselines and trends each require ≥10 complete years.')
     st.button('Start a fresh investigation',on_click=reset,width='stretch')
     st.divider()
-    st.caption(f'GPCP AVAILABLE RECORD\n\n{metadata["start"][:7]} → {metadata["end"][:7]}\n\nAnnual analysis excludes incomplete years.')
+    st.caption(f'RAINFALL DATA · GPCP\n\n{metadata["start"][:7]} → {metadata["end"][:7]}\n\nAnnual analysis excludes incomplete years.')
     st.markdown('[Dataset & attribution ↗](https://psl.noaa.gov/data/gridded/data.gpcp.html)')
+
+st.caption('START HERE · Choose what you want to explore')
+entry = st.columns(3)
+entry[0].button('Explore rainfall', key='go_rainfall', on_click=open_workspace, args=('01 / Evidence atlas',), width='stretch')
+entry[1].button('Compare satellite images', key='go_satellite', on_click=open_workspace, args=('Satellite images',), width='stretch')
+entry[2].button('Quizzes & investigations', key='go_cases', on_click=open_workspace, args=('03 / Case files',), width='stretch')
 
 if variable=='t2m':
     if mode=='Country aggregation':
@@ -159,7 +183,21 @@ st.html("""<section class="hero">
 <p class="subtitle">Every landscape leaves a clue. Trace the rainfall, question the patterns, and build your case from decades of Earth observations.</p></div>
 <div class="hero-art" aria-hidden="true"><div class="stamp">FIELD OFFICE<br>MENA · EST. 1979</div>
 <div class="detective-lens"><span class="lens-drop"></span><span class="lens-dunes"></span></div><span class="coordinates">18° W — 63° E / 10° N — 43° N<br>FOLLOW THE EVIDENCE.</span></div></section>""")
-st.html(f'<span class="source-pill">EVIDENCE SOURCE · GPCP {metadata["version"]} / NOAA PSL</span><span class="source-pill">{start} — {end}</span><span class="source-pill">2.5° × 2.5° · Monthly observations</span>')
+if st.session_state.get('workspace_tab') != 'Satellite images':
+    st.html(f'<span class="source-pill">EVIDENCE SOURCE · GPCP {metadata["version"]} / NOAA PSL</span><span class="source-pill">{start} — {end}</span><span class="source-pill">2.5° × 2.5° · Monthly observations</span>')
+navigation_key='workspace_navigation_'+str(st.session_state.get('workspace_revision',0))
+explorer,satellite,comparison,guided,notebook,methods,deficits = st.tabs(
+    WORKSPACES,default=st.session_state.get('workspace_initial_label',WORKSPACES[0]),
+    key=navigation_key,on_change=workspace_changed,args=(navigation_key,))
+if satellite.open:
+    with satellite:
+        st.caption('SATELLITE WORKSPACE · 1 Choose images → 2 Load your comparison → 3 Drag the divider')
+        pair = render_satellite_comparison(monthly,metadata)
+        if pair:
+            st.button('Investigate this comparison',key='satellite_to_case',on_click=choose_case,
+                      args=('satellite','Investigate on your own'),type='primary')
+            st.caption('Keep these image dates and record your hypothesis, evidence and conclusion in Case 006.')
+    st.stop()
 try:
     window = select_period(annual,start,end)
 except ValueError as exc:
@@ -182,11 +220,6 @@ try:
 except ValueError as exc:
     st.warning(str(exc)); st.stop()
 
-case_titles = {'morocco': 'Is Morocco becoming drier?', 'compare': 'Across the border',
-               'anomaly': 'The dry-year files', 'trends': 'Follow the strongest trail'}
-active_case = case_titles.get(st.session_state.get('active_case'), 'An open investigation')
-st.html(f'<div class="case-strip"><b>CASE FILE / OPEN</b><span>{html.escape(active_case)}</span><span>{html.escape(label)} · {start}–{end}</span></div>')
-explorer,comparison,guided,notebook,methods,deficits = st.tabs(['01 / Evidence atlas','02 / Cross-examine','03 / Case files','04 / Field notebook','05 / The science','06 / Rainfall deficits & SPI'])
 with explorer:
     st.caption('YOUR INVESTIGATION / Survey the scene → inspect a year → weigh the trend → pin your evidence')
     tool_a, tool_b, tool_c = st.columns(3)
@@ -317,27 +350,7 @@ with comparison:
     render_comparison(annual,countries,start,end,bstart,bend,alpha,inference_method,weighting)
 
 with guided:
-    st.subheader('Explore a Climate Mystery')
-    st.write('A good detective begins with a question. Open a file, follow the trail, and let the observations challenge your first impression.')
-    with st.container(border=True):
-        render_playable_mystery(annual,countries,metadata,years,bstart,bend,weighting)
-    with st.container(border=True):
-        render_satellite_comparison(monthly,metadata)
-    st.markdown('### Open investigations')
-    investigations = [('morocco','Case 001 / Is Morocco becoming drier?','Inspect the fitted trend, annual variability, and uncertainty for the Morocco country mask.'),
-                      ('compare','Case 002 / Across the border','Open Cross-examine to compare Morocco with Algeria on shared years and baselines.'),
-                      ('anomaly','Case 003 / The dry-year files','Switch to the annual anomaly map, then change the observation year to explore rainfall deficits.'),
-                      ('trends','Case 004 / Follow the strongest trail','Switch to the linear trend map. Hover to inspect magnitude, then use the significance layer to assess evidence.')]
-    case_columns = st.columns(2)
-    for index, (key,title,description) in enumerate(investigations):
-        with case_columns[index % 2].container(border=True):
-            st.markdown(f'### {title}')
-            st.write(description)
-            st.button('Open this case',key='preset_'+key,on_click=preset,args=(key,))
-    st.caption('Presets configure live calculations; they do not encode conclusions. Results for the open case appear below.')
-    active=st.session_state.get('active_case')
-    guided_trends=cached_trends(file_stamp,start,end,window,inference_method) if active=='trends' else None
-    render_live_investigation(annual,countries,start,end,bstart,bend,alpha,active,guided_trends,inference_method,weighting)
+    render_case_library(annual,monthly,countries,metadata,years,start,end,bstart,bend,alpha,inference_method,weighting,preset)
 
 with notebook:
     st.subheader('Your field notebook')
@@ -393,7 +406,7 @@ with notebook:
     for i, clue in enumerate(clues):
         with st.expander(f'Clue {i+1:02d} · {clue["location"]} · {clue["period"]}'):
             st.write(f'**{clue["status"]}**')
-            if clue.get('evidence_kind') == 'playable mystery':
+            if clue.get('evidence_kind') in ('playable mystery','case investigation'):
                 st.caption(f'Baseline {clue["baseline"]} · {clue["country_weighting"]} weighting · {clue["source"]}')
             else:
                 st.write(f'Trend: {clue["trend_mm_decade"]} mm/decade · {clue.get('inference_method','OLS')} p = {clue["p_value"]} · 95% CI: {clue["confidence_interval"]}')

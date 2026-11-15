@@ -1,0 +1,57 @@
+/* The desk and stains are decoration; all actions remain native keyboard-accessible buttons. */
+.st-key-case_desk {
+  padding:28px 26px 14px;border:1px solid #3f3024;border-radius:5px;
+  background-color:#624733;
+  background-image:radial-gradient(ellipse at 20% 0%,#c2a07933,transparent 60%),
+    repeating-linear-gradient(2deg,transparent 0 3px,#1d110b14 4px,transparent 6px 15px),
+    repeating-linear-gradient(89deg,#ad83551c 0 1px,transparent 2px 95px,#1e130c33 96px 98px);
+  box-shadow:inset 0 0 50px #1a100b55,0 5px 12px #241b2229;
+}
+.desk-heading {display:flex;justify-content:space-between;gap:12px;padding:0 2px 12px;color:#ead6b1;font:11px 'Courier New',monospace;letter-spacing:1px;}
+.desk-heading em {font:italic 14px Georgia,serif;color:#dfc29b;letter-spacing:0;}
+.st-key-case_desk [class*="st-key-file_case_"] {position:relative;isolation:isolate;margin:12px 0 20px;}
+.file-folder {--tilt:-1.1deg;--paper:#cfb176;position:relative;height:294px;margin:8px 4px 22px;perspective:1100px;transform:rotate(var(--tilt));transition:transform .25s;pointer-events:none;}
+.folder-back {position:absolute;inset:6px 0 0;background:linear-gradient(115deg,#b79558,#d5b77f 60%,#b89761);border:1px solid #957342;border-radius:3px 6px 5px 3px;box-shadow:2px 8px 13px #190e0a55;}
+.folder-tab {position:absolute;left:16px;top:-23px;padding:7px 20px 5px;background:#c7a66b;border:1px solid #967541;border-bottom:0;border-radius:7px 13px 0 0;font:bold 11px 'Courier New',monospace;letter-spacing:1px;color:#4d3d29;box-shadow:inset 0 2px 3px #f4e0b344;}
+.folder-sheet {position:absolute;inset:17px 12px 13px;background:#eee1bf;border:1px solid #bda879;box-shadow:0 1px 3px #44321d35;}
+.sheet-under {transform:rotate(2deg);background:#ddd1ae;}
+.sheet-main {transform:rotate(-.6deg);padding:17px 19px;display:flex;flex-direction:column;gap:11px;background-image:repeating-linear-gradient(0deg,transparent 0 23px,#71694b1a 24px,transparent 25px);}
+.sheet-heading {font:9px 'Courier New',monospace;letter-spacing:1px;color:#71664e;}
+.sheet-title {font:bold 21px/1.15 Georgia,serif;color:#293f34;max-width:95%;}
+.sheet-question {font:14px/1.5 Georgia,serif;color:#4b503e;}
+.sheet-progress {font:9px/1.6 'Courier New',monospace;letter-spacing:.5px;color:#6a5138;margin-top:0;}
+.sheet-instruction {font:italic 12px/1.4 Georgia,serif;color:#3d5944;}
+.folder-cover {position:absolute;inset:28px -2px -2px;z-index:3;padding:24px 24px 18px;border:1px solid #9e7b44;border-radius:3px 5px 8px 5px;
+  background-color:var(--paper);background-image:radial-gradient(ellipse at 2% 100%,#6f442148,transparent 48%),radial-gradient(ellipse at 94% 15%,#f4dbaa44,transparent 48%),repeating-linear-gradient(4deg,#6b4a2010 0 .7px,transparent 1px 4px),linear-gradient(100deg,#f3d69b24,transparent 45%,#6948271c);
+  box-shadow:inset 0 0 19px #68461a29,inset 0 -3px 5px #6f4a2e44,0 4px 5px #3d24152b;
+  transform-origin:center bottom;backface-visibility:hidden;transform:rotateX(0);transition:transform .55s cubic-bezier(.2,.7,.25,1),box-shadow .4s;
+  display:flex;flex-direction:column;align-items:flex-start;
+}
+.folder-fold {position:absolute;right:0;top:0;width:30px;height:30px;background:linear-gradient(45deg,transparent 47%,#8c6c3d35 49%,#e0c58b 52%);opacity:.8;}
+.folder-bureau {font:9px 'Courier New',monospace;letter-spacing:1.2px;color:#695432;}
+.folder-number {font:bold 13px 'Courier New',monospace;color:#51412e;margin:19px 0 8px;letter-spacing:1px;}
+.folder-title {font:bold 25px/1.15 Georgia,serif;letter-spacing:-.6px;color:#273c30;max-width:88%;position:relative;z-index:1;}
+.folder-pencil {font:italic 14px Georgia,serif;color:#66583e;transform:rotate(-2deg);margin-top:14px;}
+.folder-action {margin-top:auto;font:10px 'Courier New',monospace;color:#5b4b30;letter-spacing:1.2px;border-top:1px solid #7e663840;padding-top:10px;width:100%;}
+.folder-action span {float:right;font-size:16px;}
+.folder-stamp {position:absolute;right:20px;bottom:43px;transform:rotate(-12deg);padding:5px 8px;border:3px double #8c493b80;color:#8c493bad;font:bold 9px/1.3 'Courier New',monospace;letter-spacing:1px;text-align:center;opacity:.72;}
+.coffee-ring {position:absolute;right:12px;top:70px;width:87px;height:79px;transform:rotate(19deg);border:5px solid #75401e26;border-left-color:#75401e12;border-right-color:#75401e45;border-radius:46% 53% 48% 55%;box-shadow:0 0 3px 2px #75401e18,inset 0 0 3px 2px #75401e1c;}
+.coffee-ring:after {content:'';position:absolute;inset:-10px -8px -9px;border:1px solid #74401f21;border-radius:53% 45% 49% 46%;transform:rotate(-13deg);}
+.coffee-drop {position:absolute;right:78px;top:165px;width:12px;height:17px;background:#78402025;border-radius:60% 40% 65% 45%;transform:rotate(-28deg);box-shadow:24px 9px 0 -3px #7840202a,-7px 14px 0 -4px #78402030;}
+.folder-clip {position:absolute;right:25px;top:-3px;z-index:5;width:14px;height:43px;border:3px solid #706b58;border-radius:10px;transform:rotate(10deg);box-shadow:inset 1px 0 #e4d9b0,1px 1px 1px #29201666;}
+.folder-clip:before {content:'';position:absolute;inset:5px 2px -2px;border:2px solid #928a70;border-radius:7px;}
+.folder-open-label {position:absolute;left:15px;right:15px;bottom:-25px;font:10px 'Courier New',monospace;color:#f0ddbd;opacity:0;transition:opacity .35s;}
+.file-folder.is-open .folder-cover {transform:rotateX(-80deg);box-shadow:0 0 0 transparent;animation:file-folder-open .6s cubic-bezier(.2,.7,.25,1);}
+.file-folder.is-open .folder-open-label {opacity:1;}
+.file-folder.is-open .folder-back {box-shadow:0 0 0 2px #e8cea480,3px 8px 18px #170d0966;}
+.folder-variant-1 {--tilt:1.25deg;--paper:#c3a374;}.folder-variant-2 {--tilt:.6deg;--paper:#d0b27b;}.folder-variant-3 {--tilt:-.8deg;--paper:#bea579;}.folder-variant-4 {--tilt:-1.5deg;--paper:#d4b784;}.folder-variant-5 {--tilt:1deg;--paper:#c3aa7c;}
+.folder-variant-1 .coffee-ring {top:124px;right:125px;opacity:.7;}.folder-variant-2 .coffee-ring {right:9px;top:114px;transform:scale(.8) rotate(-15deg);}.folder-variant-3 .coffee-ring {top:12px;right:24px;opacity:.55;}.folder-variant-4 .coffee-ring {top:118px;right:20px;transform:scale(1.14) rotate(-7deg);}.folder-variant-5 .coffee-ring {top:30px;right:35px;opacity:.7;}
+.st-key-case_desk [class*="st-key-preset_"] {position:absolute!important;inset:0!important;z-index:10;width:100%!important;height:100%!important;}
+.st-key-case_desk [class*="st-key-preset_"] [data-testid="stButton"],.st-key-case_desk [class*="st-key-preset_"] button {width:100%;height:100%;}
+.st-key-case_desk [class*="st-key-preset_"] button {opacity:0;cursor:pointer;}
+.st-key-case_desk [class*="st-key-file_case_"]:has(button:hover) .file-folder {transform:translateY(-5px) rotate(0deg);}
+.st-key-case_desk [class*="st-key-file_case_"]:has(button:focus-visible) .file-folder {outline:3px solid #f9e4af;outline-offset:8px;border-radius:4px;}
+@keyframes file-folder-open {from{transform:rotateX(0)}to{transform:rotateX(-80deg)}}
+@media(max-width:800px) {.st-key-case_desk {padding:24px 16px 12px;}.folder-title{font-size:22px;}.folder-cover{padding:21px 19px 16px;}.sheet-main{padding:15px;}.sheet-title{font-size:19px;}}
+@media(max-width:480px) {.file-folder{height:293px;margin-left:0;margin-right:0;}.desk-heading{flex-direction:column;gap:4px;}.folder-title{max-width:95%;font-size:24px;}.folder-stamp{right:14px;}.folder-bureau{font-size:8px;}}
+@media(prefers-reduced-motion:reduce) {.file-folder,.folder-cover,.folder-open-label{animation:none!important;transition:none!important;}}

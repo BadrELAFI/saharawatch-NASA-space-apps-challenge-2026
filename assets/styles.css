@@ -54,7 +54,7 @@ p,li {line-height:1.65;}
 .briefing-verdict {border-left:5px solid #9a4f32;padding:20px 24px;}
 .briefing-verdict h3 {font-size:1.45rem!important;}
 .briefing-verdict p {line-height:1.75;}
-.mystery-dossier {border:1px solid #9f7840;border-left:5px solid var(--rust);background:#dfcfac;padding:20px 24px;margin:12px 0;box-shadow:3px 3px 0 #ae9870;}
-.mystery-dossier .eyebrow {margin-bottom:8px;color:var(--rust);}
-.mystery-dossier h3 {margin:0 0 8px!important;}
-.mystery-dossier p {margin:0;}
+.hero {padding:24px 32px;gap:18px;margin-bottom:18px;}
+.hero-art {min-height:175px;}
+.hero h1 {font-size:3.2rem!important;}
+@media(max-width:600px) {.hero {padding:20px;} .hero h1 {font-size:2.5rem!important;}}

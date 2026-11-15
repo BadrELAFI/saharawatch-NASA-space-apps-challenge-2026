@@ -25,12 +25,13 @@ def test_ranking_uses_absolute_magnitude_excludes_missing_and_breaks_ties():
 def test_all_guided_cases_render_live_results_and_preserve_period():
     at=AppTest.from_file(ROOT/'app.py').run(timeout=30)
     at.slider(key='period').set_range(1991,2020).run(timeout=30)
+    at.radio(key='case_path').set_value('Investigate on your own').run(timeout=30)
     for case,plot in [('morocco','guided_morocco_history'),('compare','guided_comparison'),
                       ('anomaly','guided_anomaly_map'),('trends','guided_rank_map')]:
         at.button(key='preset_'+case).click().run(timeout=30)
         assert not at.exception,case
         assert tuple(at.slider(key='period').value)==(1991,2020)
         assert plot in [e.key for e in at.get('plotly_chart')]
-    at.slider(key='period').set_range(2020,2024).run(timeout=30)
+    at.slider(key='mission_trends_period').set_range(2020,2024).run(timeout=30)
     assert not at.exception
     assert any('enough valid annual' in e.value for e in at.info)
