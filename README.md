@@ -45,6 +45,7 @@ Precipitation deficits are evidence of meteorological dryness, not a complete as
 - Compare two countries or two geographic grid cells on shared axes, in rainfall units or standardized anomalies. Each selection includes a historical chart, confidence interval, sample size, recent anomaly, and deterministic comparison of absolute and relative trend magnitudes. Download the summaries as CSV; a separate paired Newey–West HAC test evaluates the common-year linear trend difference.
 - Open **Explore a Climate Mystery** under **03 / Case files** for live Morocco trends and anomalies, Morocco versus Algeria/Tunisia comparisons, historical annual anomaly maps, and a ranking of absolute precipitation trends. Presets preserve the chosen analysis period. The strongest-trends case includes a ranked map, top-20 table, and complete CSV export; raw p-values and BH-FDR flags distinguish magnitude from statistical evidence.
 - Play **Case 005 / Has the rain returned?**: predict Morocco’s recent rainfall balance, reveal three clues, pin evidence, and submit a verdict before uncovering the calculated assessment. Download the solved case with its frozen observations and provenance.
+- Open the **satellite before/after reveal** in Case files to slide between real February 2023 and February 2024 views around Casablanca, inspect the coarse rainfall-cell footprint, and compare the imagery dates with monthly GPCP observations.
 - Jump to the selected location’s driest year, trace its long-term trend, or challenge the evidence with the significance map.
 - Record a working hypothesis in the field notebook and compare it with the calculated trend, including inconclusive results.
 - Pin evidence snapshots with their location, analysis period, baseline, source, uncertainty, and field notes. Remove clues or download a Markdown case report. The notebook is session-only; download it before closing or refreshing the session. Starting a fresh investigation clears it.
@@ -55,6 +56,26 @@ The interface combines a Victorian detective’s casebook with a drought field s
 The dashboard uses Streamlit, Plotly, xarray, NumPy, Pandas, SciPy, netCDF4, and Shapely. Source loading, scientific calculations, and plotting are separate small modules in `saharawatch/`; there is no separate backend service.
 
 ## Feature previews
+
+### Satellite before/after reveal
+
+Open **03 / Case files → Open the satellite before/after reveal**. Drag the divider, tap the image, or use the keyboard slider to compare Aqua MODIS imagery from **12 February 2023** with Terra MODIS imagery from **19 February 2024**. Both NASA GIBS true-color images cover the same 9–6° W, 31–34° N extent around Casablanca. An optional overlay shows the actual **2.5° GPCP cell boundaries**, making the difference between imagery detail and rainfall resolution visible.
+
+![Satellite comparison showing aligned February 2023 and February 2024 views around Casablanca, a draggable divider, and the GPCP cell overlay](assets/satellite-comparison.png)
+
+The original satellite views, covering the same geographic extent:
+
+| Before · 12 February 2023 · Aqua MODIS | After · 19 February 2024 · Terra MODIS |
+| --- | --- |
+| ![Before: NASA GIBS true-color view around Casablanca on 12 February 2023](data/satellite/casablanca-2023-02-12.jpg) | ![After: NASA GIBS true-color view around Casablanca on 19 February 2024](data/satellite/casablanca-2024-02-19.jpg) |
+
+[View the satellite comparison on mobile](assets/satellite-comparison-mobile.png).
+
+The rainfall chart marks both acquisition dates and shows the nearest GPCP cell to Casablanca. Separate six-month totals cover complete months before each acquisition month; missing observations withhold the corresponding total. Monthly bars include days after the acquisition date and cannot resolve individual rainfall events. The curated dates and location stay fixed as sidebar settings change.
+
+Images are bundled locally and checked against recorded SHA-256 hashes. Opening or dragging the comparison makes no external imagery requests. Download the evidence ZIP for both original JPEG responses, monthly rainfall CSV, and acquisition/source provenance. This is a visual investigation: same-season images still differ in platform, overpass, haze, clouds, snow, and other conditions; their appearance does not establish rainfall causation or quantify vegetation health or reservoir volume.
+
+See [image provenance and limitations](data/satellite/README.md) and [NASA’s published comparison](https://science.nasa.gov/earth/earth-observatory/drought-parches-morocco-152467/). Verify the interaction with `python scripts/browser_satellite_smoke.py` against a running app, or set `SAHARAWATCH_TEST_URL` for another port.
 
 ### Playable climate mystery
 

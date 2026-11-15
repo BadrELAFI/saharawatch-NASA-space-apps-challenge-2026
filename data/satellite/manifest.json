@@ -1,0 +1,40 @@
+{
+  "schema": "saharawatch-satellite-pair-v1",
+  "title": "The changing landscape around Casablanca",
+  "source": "NASA EOSDIS Global Imagery Browse Services (GIBS)",
+  "credit": "NASA GIBS / Aqua and Terra MODIS",
+  "context_url": "https://science.nasa.gov/earth/earth-observatory/drought-parches-morocco-152467/",
+  "documentation_url": "https://nasa-gibs.github.io/gibs-api-docs/python-usage/",
+  "projection": "EPSG:4326",
+  "bbox": [
+    -9,
+    31,
+    -6,
+    34
+  ],
+  "width": 900,
+  "height": 900,
+  "retrieved_at": "2026-11-15T14:56:55.873258+00:00",
+  "images": [
+    {
+      "file": "casablanca-2023-02-12.jpg",
+      "date": "2023-02-12",
+      "instrument": "MODIS",
+      "platform": "Aqua",
+      "layer": "MODIS_Aqua_CorrectedReflectance_TrueColor",
+      "sha256": "da97566825d19e6eecd8720dda3323147ea55e06a4d1a5c324b8e352c94a8136",
+      "url": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&version=1.1.1&request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&styles=&srs=EPSG%3A4326&bbox=-9%2C31%2C-6%2C34&width=900&height=900&format=image%2Fjpeg&time=2023-02-12"
+    },
+    {
+      "file": "casablanca-2024-02-19.jpg",
+      "date": "2024-02-19",
+      "instrument": "MODIS",
+      "platform": "Terra",
+      "layer": "MODIS_Terra_CorrectedReflectance_TrueColor",
+      "sha256": "eae6b41a4529495657630a289828e613011cc48150efa8b654ebe3bdec540c0d",
+      "url": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&version=1.1.1&request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&styles=&srs=EPSG%3A4326&bbox=-9%2C31%2C-6%2C34&width=900&height=900&format=image%2Fjpeg&time=2024-02-19"
+    }
+  ],
+  "review": "Visually inspected at preparation: coastline and terrain align; clouds, haze and snow remain visible. No quantitative cloud screening or vegetation classification was performed.",
+  "limits": "Same-season dates, seven calendar days apart within February in successive years. Different satellite platforms and overpass conditions affect appearance. True-color browse images are not quantitative vegetation, reservoir-volume, or rainfall measurements. Visual differences alone do not establish rainfall causation."
+}

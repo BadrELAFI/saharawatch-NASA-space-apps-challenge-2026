@@ -14,6 +14,7 @@ from saharawatch.evidence_board import render_evidence_board, clue_id, RELATIONS
 from saharawatch.reports import build_report_archive
 from saharawatch.guided import render_live_investigation
 from saharawatch.mystery import render_playable_mystery
+from saharawatch.satellite import render_satellite_comparison
 from saharawatch.comparison import render_comparison
 from saharawatch.trend_diagnostics import render_trend_diagnostics
 from saharawatch.drought import anomaly_statistics
@@ -320,6 +321,8 @@ with guided:
     st.write('A good detective begins with a question. Open a file, follow the trail, and let the observations challenge your first impression.')
     with st.container(border=True):
         render_playable_mystery(annual,countries,metadata,years,bstart,bend,weighting)
+    with st.container(border=True):
+        render_satellite_comparison(monthly,metadata)
     st.markdown('### Open investigations')
     investigations = [('morocco','Case 001 / Is Morocco becoming drier?','Inspect the fitted trend, annual variability, and uncertainty for the Morocco country mask.'),
                       ('compare','Case 002 / Across the border','Open Cross-examine to compare Morocco with Algeria on shared years and baselines.'),
