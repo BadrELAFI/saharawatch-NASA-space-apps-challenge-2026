@@ -18,7 +18,9 @@ python scripts/prepare_data.py
 streamlit run app.py
 ```
 
-Open **http://localhost:8501**. The preparation command downloads the approximately 20 MB source file once. Subsequent runs validate the existing file. To explicitly update it, use `python scripts/prepare_data.py --refresh`. Downloads are validated before replacing an existing valid file. The dashboard never downloads data on interaction and shows an actionable error if the source is missing or malformed.
+Open **http://localhost:8501**. The preparation command downloads the approximately 20 MB rainfall source file once. Subsequent runs validate the existing file. To explicitly update it, use `python scripts/prepare_data.py --refresh`. Downloads are validated before replacing an existing valid file. Rainfall exploration uses the prepared local observations and shows an actionable error if that source is missing or malformed. Custom satellite imagery and point temperature observations download only through their explicit load buttons; downloaded evidence is cached locally.
+
+Start with **Explore rainfall**, **Compare satellite images**, or **Quizzes & investigations** at the top. Satellite imagery has its own tab beside the atlas; its date controls are separate from rainfall filters. Case files offer a guided quiz or an independent investigation for each of the six folders.
 
 The prepared dataset in this workspace covers **January 1979–October 2026**; complete calendar years through **2025** are available for annual exploration. The default analysis is **2001–2024**, with a **2001–2020** anomaly baseline. Coverage follows the downloaded file, not a hardcoded latest date.
 
@@ -43,9 +45,9 @@ Precipitation deficits are evidence of meteorological dryness, not a complete as
 - Change the analysis window, baseline, anomaly observation year, and significance threshold.
 - Inspect annual and monthly rainfall, a fitted annual trend, optional moving averages, seasonal climatology, and anomalies.
 - Compare two countries or two geographic grid cells on shared axes, in rainfall units or standardized anomalies. Each selection includes a historical chart, confidence interval, sample size, recent anomaly, and deterministic comparison of absolute and relative trend magnitudes. Download the summaries as CSV; a separate paired Newey–West HAC test evaluates the common-year linear trend difference.
-- Open **Explore a Climate Mystery** under **03 / Case files** for live Morocco trends and anomalies, Morocco versus Algeria/Tunisia comparisons, historical annual anomaly maps, and a ranking of absolute precipitation trends. Presets preserve the chosen analysis period. The strongest-trends case includes a ranked map, top-20 table, and complete CSV export; raw p-values and BH-FDR flags distinguish magnitude from statistical evidence.
-- Play **Case 005 / Has the rain returned?**: predict Morocco’s recent rainfall balance, reveal three clues, pin evidence, and submit a verdict before uncovering the calculated assessment. Download the solved case with its frozen observations and provenance.
-- Open the **satellite before/after reveal** in Case files to slide between real February 2023 and February 2024 views around Casablanca, inspect the coarse rainfall-cell footprint, and compare the imagery dates with monthly GPCP observations.
+- Open **03 / Case files** and choose any of six cases: long-term trends, cross-country comparison, annual anomalies, trend magnitude versus significance, recent rainfall recovery, and satellite interpretation. Each case offers **Answer the quiz** and **Investigate on your own**.
+- Guided quizzes freeze the observations when opened and ask one question after each of three clues. Feedback explains the supported answer and the misconception behind other choices. Completed quizzes, active attempts and independent drafts stay separate for each case in the session; download reports before closing it.
+- Independent investigations let you state a hypothesis, choose countries and periods, inspect live charts, pin evidence as supporting, challenging or contextual, and save a conclusion with one limitation. Completion records the required steps without automatically grading written scientific conclusions. The satellite case links directly to the dedicated comparison workspace.
 - Jump to the selected location’s driest year, trace its long-term trend, or challenge the evidence with the significance map.
 - Record a working hypothesis in the field notebook and compare it with the calculated trend, including inconclusive results.
 - Pin evidence snapshots with their location, analysis period, baseline, source, uncertainty, and field notes. Remove clues or download a Markdown case report. The notebook is session-only; download it before closing or refreshing the session. Starting a fresh investigation clears it.
@@ -59,39 +61,62 @@ The dashboard uses Streamlit, Plotly, xarray, NumPy, Pandas, SciPy, netCDF4, and
 
 ### Satellite before/after reveal
 
-Open **03 / Case files → Open the satellite before/after reveal**. Drag the divider, tap the image, or use the keyboard slider to compare Aqua MODIS imagery from **12 February 2023** with Terra MODIS imagery from **19 February 2024**. Both NASA GIBS true-color images cover the same 9–6° W, 31–34° N extent around Casablanca. An optional overlay shows the actual **2.5° GPCP cell boundaries**, making the difference between imagery detail and rainfall resolution visible.
+Click **Compare satellite images** at the top of the app, or open the **Satellite images** tab beside the rainfall atlas. Images appear immediately: no quiz, hypothesis, or reveal toggle is required. The recommended example compares Aqua MODIS on **12 February 2023** with Terra MODIS on **19 February 2024**, over the same 9–6° W, 31–34° N extent around Casablanca.
 
-![Satellite comparison showing aligned February 2023 and February 2024 views around Casablanca, a draggable divider, and the GPCP cell overlay](assets/satellite-comparison.png)
+![Satellite comparison with a draggable divider and optional GPCP cell overlay](assets/satellite-comparison.png)
 
-The original satellite views, covering the same geographic extent:
+**Choose your own years:** select **Choose years**, choose Terra or Aqua MODIS, set a **Before year** and **After year**, and choose a common month/day. Press **Load comparison** to request those exact dates from NASA GIBS. The displayed **Showing** label always states the dates and platforms of the images actually loaded. Controls do not relabel an old image while a new selection is pending.
+
+![Satellite workspace with year, month and day controls](assets/satellite-year-controls.png)
+
+[View the year controls on mobile](assets/satellite-year-controls-mobile.png).
+
+The app checks NASA's actual time-domain catalogue, including known gaps. Invalid dates, reversed or equal years, future dates, unreadable responses, and blank imagery produce an explanation while retaining the previous comparison. No nearby date is silently substituted. Clouds, haze and snow can still obscure valid imagery; change the common day to inspect another acquisition. Transparent missing-data area is distinguished from valid pixels; valid-image coverage is **not** a cloud-free percentage.
+
+Custom comparisons use the same satellite, output extent, projection, month and day in both years. Exact original PNG responses, request URLs, timestamps, checksums, and valid-image area are cached under ignored `data/raw/satellite/`. New images are fetched only after **Load comparison**; dragging the divider, changing rainfall filters, or returning to a previously downloaded pair reuses local observations. The recommended example is bundled and remains available without a network connection.
+
+The rainfall chart marks the loaded acquisition dates and shows the nearest GPCP cell to Casablanca. Separate six-month totals cover complete months before each acquisition month; missing observations withhold the corresponding total. Monthly bars include days after acquisition and cannot resolve individual rainfall events. The optional overlay shows actual **2.5° GPCP cell boundaries**, rather than suggesting that image detail increases rainfall resolution. Rainfall sidebar settings are collapsed in this workspace and do not change image dates.
+
+Download the evidence ZIP for both original images, monthly rainfall CSV and the loaded pair's provenance. **Investigate this comparison** opens **Case 006 → Investigate on your own**, carrying the current dates into evidence pins and saved reasoning. The Case 006 quiz uses the fixed 2023/2024 teaching example and labels it separately.
+
+The original example, with matching geographic extent:
 
 | Before · 12 February 2023 · Aqua MODIS | After · 19 February 2024 · Terra MODIS |
 | --- | --- |
-| ![Before: NASA GIBS true-color view around Casablanca on 12 February 2023](data/satellite/casablanca-2023-02-12.jpg) | ![After: NASA GIBS true-color view around Casablanca on 19 February 2024](data/satellite/casablanca-2024-02-19.jpg) |
+| ![Before: NASA GIBS view around Casablanca on 12 February 2023](data/satellite/casablanca-2023-02-12.jpg) | ![After: NASA GIBS view around Casablanca on 19 February 2024](data/satellite/casablanca-2024-02-19.jpg) |
 
-[View the satellite comparison on mobile](assets/satellite-comparison-mobile.png).
+[View the comparison on mobile](assets/satellite-comparison-mobile.png). See [image provenance and limits](data/satellite/README.md), [NASA's original context](https://science.nasa.gov/earth/earth-observatory/drought-parches-morocco-152467/) and [GIBS time-domain documentation](https://nasa-gibs.github.io/gibs-api-docs/access-basics/).
 
-The rainfall chart marks both acquisition dates and shows the nearest GPCP cell to Casablanca. Separate six-month totals cover complete months before each acquisition month; missing observations withhold the corresponding total. Monthly bars include days after the acquisition date and cannot resolve individual rainfall events. The curated dates and location stay fixed as sidebar settings change.
+Run `python scripts/browser_satellite_smoke.py` for the bundled comparison or `python scripts/browser_satellite_years_smoke.py` for custom-year loading and handoff; set `SAHARAWATCH_TEST_URL` to use another port. The custom-year check requires NASA access or a previously cached catalogue and image pair.
 
-Images are bundled locally and checked against recorded SHA-256 hashes. Opening or dragging the comparison makes no external imagery requests. Download the evidence ZIP for both original JPEG responses, monthly rainfall CSV, and acquisition/source provenance. This is a visual investigation: same-season images still differ in platform, overpass, haze, clouds, snow, and other conditions; their appearance does not establish rainfall causation or quantify vegetation health or reservoir volume.
+### Six cases, two ways to investigate
 
-See [image provenance and limitations](data/satellite/README.md) and [NASA’s published comparison](https://science.nasa.gov/earth/earth-observatory/drought-parches-morocco-152467/). Verify the interaction with `python scripts/browser_satellite_smoke.py` against a running app, or set `SAHARAWATCH_TEST_URL` for another port.
+Open **03 / Case files**. The shared selector and path choice appear first, labeled as steps 1 and 2, with difficulty, estimated duration, and separate quiz/investigation completion status. The six cases sit on a detective’s wooden desk as worn manila folders, with paper tabs, clips, pencilled details, coffee rings, and evidence stamps. Click anywhere on a folder to fold its cover open and reveal its field notes; the quiz or investigation below switches to that case. The active folder stays open. Folders also work with keyboard and touch, and opening motion is disabled when reduced motion is preferred.
 
-### Playable climate mystery
+| Case | Investigation |
+| --- | --- |
+| 001 · Is Morocco becoming drier? | Fitted direction, statistical uncertainty and attribution limits |
+| 002 · Across the border | Morocco–Algeria magnitudes and a paired HAC slope-difference test |
+| 003 · The dry-year files | Annual anomalies, a −1.5 standardized-anomaly threshold and the one-year trap |
+| 004 · Follow the strongest trail | Trend rankings, FDR flags and the distinction from drought risk |
+| 005 · Has the rain returned? | Latest three complete years, accumulated deficits and spatial differences |
+| 006 · What changed from space? | Satellite platforms, rainfall resolution and limits of visual attribution |
 
-Open **03 / Case files → Case 005 / Has the rain returned?** to investigate Morocco’s latest three complete calendar years. Record a prediction before opening the envelope, reveal the annual record, accumulated rainfall departures, and country-cell footprint in sequence, then choose a verdict before unsealing the calculated assessment. A recent improvement can coexist with a remaining accumulated deficit; the conclusion follows the observations rather than a preset story. Missing observations can produce **Insufficient data**.
+**Answer the quiz:** record an initial hypothesis, open a frozen attempt, and answer a question after each of three clues. Check an answer to see the supported choice, its numerical or conceptual explanation, and feedback on the selected alternative. Incorrect answers do not block learning; the first-attempt score remains recorded. Unsupported numerical assessments offer **Insufficient data**. Quiz answers follow the observations and selected method rather than preset climate conclusions. Each answered clue can be pinned to the notebook. Download a solved quiz as JSON, including observations, charts, answers, settings and source provenance, or continue directly into an independent investigation.
 
-**Predict → Reveal three clues → Pin evidence → Choose a verdict → Unseal the assessment.**
+**Investigate on your own:** write a hypothesis, choose a country and investigation/reference periods, then explore the live evidence with optional hints. These period controls are independent of the sidebar. The cross-country case lets you choose a partner; the anomaly and ranking cases investigate the MENA rectangle, including ocean cells. The recent-rainfall case supports 3-, 5- or 10-year assessments. The satellite investigation uses the pair currently loaded in the dedicated Satellite images workspace. Pin observations with an interpretation and note, then write a conclusion and limitation. Saving requires all four steps: hypothesis, pinned evidence, conclusion, limitation. The app records completion without deciding whether the prose is scientifically correct. JSON exports preserve the saved evidence and reasoning; save again after edits to update the download.
 
-![Playable climate mystery showing Morocco’s rainfall-deficit footprint, clue-pinning controls, and the next step toward a verdict](assets/playable-mystery.png)
+![Six worn case-file folders on a detective’s desk, with coffee stains, paper clips and the selected folder open](assets/case-folders.png)
 
-[View the prediction screen on mobile](assets/playable-mystery-mobile.png).
+[View an open folder on mobile](assets/case-folder-mobile.png).
 
-The case freezes its observations, charts, baseline, country weighting, source status, and checksum when opened. Later sidebar changes leave that case intact; **Restart this mystery** opens a fresh envelope using the current baseline and weighting. The assessment period always uses the latest three complete years, independently of the analysis-period slider. Each clue can be pinned to the existing notebook and evidence board without revealing the final assessment. Restarting the mystery retains pinned clues; starting a fresh investigation clears the session. A solved case downloads as JSON with the prediction, verdict, observations, figures, assessment, and provenance. All narration is deterministic; no language-model service is needed.
+Attempts, completed reports, independent drafts, and pinned clues survive switching cases within the session. Restarting a quiz uses current settings while retaining completed reports and pins. **Start a fresh investigation** clears session state. Download reports before closing or refreshing the session. Quizzes are deterministic; no language-model service is needed.
 
-This case evaluates a historical precipitation balance, independently of long-term trend inference, drought impacts, attribution, or forecasting. Country-cell departures use each cell’s own baseline and report valid spatial coverage.
+Case 005 retains its historical rainfall-balance calculations and three evidence charts. Its quiz always uses the latest three complete calendar years, independently of the analysis-period slider. Its reference baseline and weighting freeze on opening. The independent version uses the investigation period's ending year. Neither version establishes drought impacts, causes, or future conditions.
 
-Verify the interaction against a running app with `python scripts/browser_mystery_smoke.py` (or set `SAHARAWATCH_TEST_URL` for another port).
+Verify the flow with `python scripts/browser_case_library_smoke.py` against a running app, or set `SAHARAWATCH_TEST_URL` for another port. `python scripts/browser_mystery_smoke.py` checks the Case 005 quiz specifically.
+
+Run `python scripts/browser_folders_smoke.py` to verify full-cover folder selection, opening state, keyboard, touch, reduced motion and mobile layout.
 
 ### Rainfall time machine
 
@@ -177,6 +202,8 @@ python scripts/browser_board_smoke.py
 ```
 
 The browser check verifies rendered plots, country and tab navigation, detective controls, note-taking, report downloads, browser errors, and a 390px mobile viewport. Set `SAHARAWATCH_TEST_URL` to test a local server on another port. It saves screenshots in `assets/`.
+
+To refresh the README's dashboard, evidence-board and rainfall-playback images, run `python scripts/capture_readme.py`. The folder and satellite browser checks refresh their corresponding desktop and mobile previews from the running app.
 
 ## Additional local improvements
 

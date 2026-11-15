@@ -14,3 +14,11 @@ Credit: NASA EOSDIS Global Imagery Browse Services (GIBS), Aqua and Terra MODIS.
 The coastline and terrain align visually. The earlier image contains visible haze and clouds, and both views include snow. There is no quantitative cloud mask or image-difference classification. Same-season acquisition limits seasonal differences but cannot eliminate them, and the two platforms have different overpass conditions. True-color browse pixels do not measure vegetation health, reservoir volume, or rainfall. Do not infer causation from an image pair.
 
 The optional GPCP overlay shows actual 2.5° cell edges, projected into the image extent. The rainfall panel uses the nearest GPCP cell to Casablanca, not a city-level estimate or a national average. Its six-month totals exclude the image-acquisition month; monthly bars include the full calendar month even when the satellite image was taken earlier in that month.
+
+## User-selected comparisons
+
+The bundled pair remains the recommended example. The separate **Satellite images** workspace also accepts two years, a common month/day and one MODIS platform for both acquisitions. It checks the selected platform's actual GIBS time-domain intervals and requests exact dates; it never silently selects an adjacent date. Custom imagery uses transparent PNG responses over the same extent and dimensions as the example.
+
+Original responses and per-image provenance are cached under ignored `data/raw/satellite/`. Checksums validate cache reuse; missing or unreadable dates retain the currently displayed pair. The last successfully fetched availability catalogue can support cached use when the service is unreachable, with a stale-catalogue notice. Cached image area measures nontransparent pixels, not cloud-free coverage. Custom pairs are not manually reviewed for clouds or registration artifacts.
+
+The loaded pair's manifest and originals are included in the satellite evidence ZIP. Case 006 independent-investigation pins use the current pair and its rainfall dates; the guided quiz remains tied to the explicitly labeled, reviewed training example.
