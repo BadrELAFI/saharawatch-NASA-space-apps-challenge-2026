@@ -137,12 +137,13 @@ export default function({data, parentElement, setStateValue}) {
         grip.append(eyebrow, el('h4', '', card.location), el('div', 'card-period', card.period));
         node.append(grip, el('p', 'card-hypothesis', card.hypothesis));
         node.append(sparkline(Array.isArray(card.annual_data) ? card.annual_data : []));
-        node.append(el('p', 'card-stat', `${card.trend_mm_decade} mm/decade · p = ${card.p_value}`));
+        const mystery = card.evidence_kind === 'playable mystery';
+        node.append(el('p', 'card-stat', mystery ? card.status : `${card.trend_mm_decade} mm/decade · p = ${card.p_value}`));
         node.append(el('p', 'card-assessment', card.assessment));
         const details = el('details', 'card-details'); details.append(el('summary', '', 'Notes, uncertainty & source'));
         details.append(el('div', 'card-detail-text', [card.notes || 'No field notes recorded.',
             `Assessment: ${card.assessment}`, `Baseline: ${card.baseline}`, `Method: ${card.inference_method}`,
-            `95% slope interval: ${card.confidence_interval}`, `Country weighting: ${card.country_weighting}`,
+            ...(mystery ? [] : [`95% slope interval: ${card.confidence_interval}`]), `Country weighting: ${card.country_weighting}`,
             `Source: ${card.source}`, `SHA-256: ${card.source_sha256}`].join('\n\n')));
         details.ontoggle = () => place(card.id); node.append(details);
         const connect = el('button', 'card-connect', 'Connect');

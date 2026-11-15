@@ -44,6 +44,7 @@ Precipitation deficits are evidence of meteorological dryness, not a complete as
 - Inspect annual and monthly rainfall, a fitted annual trend, optional moving averages, seasonal climatology, and anomalies.
 - Compare two countries or two geographic grid cells on shared axes, in rainfall units or standardized anomalies. Each selection includes a historical chart, confidence interval, sample size, recent anomaly, and deterministic comparison of absolute and relative trend magnitudes. Download the summaries as CSV; a separate paired Newey–West HAC test evaluates the common-year linear trend difference.
 - Open **Explore a Climate Mystery** under **03 / Case files** for live Morocco trends and anomalies, Morocco versus Algeria/Tunisia comparisons, historical annual anomaly maps, and a ranking of absolute precipitation trends. Presets preserve the chosen analysis period. The strongest-trends case includes a ranked map, top-20 table, and complete CSV export; raw p-values and BH-FDR flags distinguish magnitude from statistical evidence.
+- Play **Case 005 / Has the rain returned?**: predict Morocco’s recent rainfall balance, reveal three clues, pin evidence, and submit a verdict before uncovering the calculated assessment. Download the solved case with its frozen observations and provenance.
 - Jump to the selected location’s driest year, trace its long-term trend, or challenge the evidence with the significance map.
 - Record a working hypothesis in the field notebook and compare it with the calculated trend, including inconclusive results.
 - Pin evidence snapshots with their location, analysis period, baseline, source, uncertainty, and field notes. Remove clues or download a Markdown case report. The notebook is session-only; download it before closing or refreshing the session. Starting a fresh investigation clears it.
@@ -54,6 +55,22 @@ The interface combines a Victorian detective’s casebook with a drought field s
 The dashboard uses Streamlit, Plotly, xarray, NumPy, Pandas, SciPy, netCDF4, and Shapely. Source loading, scientific calculations, and plotting are separate small modules in `saharawatch/`; there is no separate backend service.
 
 ## Feature previews
+
+### Playable climate mystery
+
+Open **03 / Case files → Case 005 / Has the rain returned?** to investigate Morocco’s latest three complete calendar years. Record a prediction before opening the envelope, reveal the annual record, accumulated rainfall departures, and country-cell footprint in sequence, then choose a verdict before unsealing the calculated assessment. A recent improvement can coexist with a remaining accumulated deficit; the conclusion follows the observations rather than a preset story. Missing observations can produce **Insufficient data**.
+
+**Predict → Reveal three clues → Pin evidence → Choose a verdict → Unseal the assessment.**
+
+![Playable climate mystery showing Morocco’s rainfall-deficit footprint, clue-pinning controls, and the next step toward a verdict](assets/playable-mystery.png)
+
+[View the prediction screen on mobile](assets/playable-mystery-mobile.png).
+
+The case freezes its observations, charts, baseline, country weighting, source status, and checksum when opened. Later sidebar changes leave that case intact; **Restart this mystery** opens a fresh envelope using the current baseline and weighting. The assessment period always uses the latest three complete years, independently of the analysis-period slider. Each clue can be pinned to the existing notebook and evidence board without revealing the final assessment. Restarting the mystery retains pinned clues; starting a fresh investigation clears the session. A solved case downloads as JSON with the prediction, verdict, observations, figures, assessment, and provenance. All narration is deterministic; no language-model service is needed.
+
+This case evaluates a historical precipitation balance, independently of long-term trend inference, drought impacts, attribution, or forecasting. Country-cell departures use each cell’s own baseline and report valid spatial coverage.
+
+Verify the interaction against a running app with `python scripts/browser_mystery_smoke.py` (or set `SAHARAWATCH_TEST_URL` for another port).
 
 ### Rainfall time machine
 

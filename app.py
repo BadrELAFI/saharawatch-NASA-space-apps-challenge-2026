@@ -13,6 +13,7 @@ from saharawatch.time_machine import render_time_machine
 from saharawatch.evidence_board import render_evidence_board, clue_id, RELATIONS
 from saharawatch.reports import build_report_archive
 from saharawatch.guided import render_live_investigation
+from saharawatch.mystery import render_playable_mystery
 from saharawatch.comparison import render_comparison
 from saharawatch.trend_diagnostics import render_trend_diagnostics
 from saharawatch.drought import anomaly_statistics
@@ -317,6 +318,9 @@ with comparison:
 with guided:
     st.subheader('Explore a Climate Mystery')
     st.write('A good detective begins with a question. Open a file, follow the trail, and let the observations challenge your first impression.')
+    with st.container(border=True):
+        render_playable_mystery(annual,countries,metadata,years,bstart,bend,weighting)
+    st.markdown('### Open investigations')
     investigations = [('morocco','Case 001 / Is Morocco becoming drier?','Inspect the fitted trend, annual variability, and uncertainty for the Morocco country mask.'),
                       ('compare','Case 002 / Across the border','Open Cross-examine to compare Morocco with Algeria on shared years and baselines.'),
                       ('anomaly','Case 003 / The dry-year files','Switch to the annual anomaly map, then change the observation year to explore rainfall deficits.'),
@@ -386,8 +390,11 @@ with notebook:
     for i, clue in enumerate(clues):
         with st.expander(f'Clue {i+1:02d} · {clue["location"]} · {clue["period"]}'):
             st.write(f'**{clue["status"]}**')
-            st.write(f'Trend: {clue["trend_mm_decade"]} mm/decade · {clue.get('inference_method','OLS')} p = {clue["p_value"]} · 95% CI: {clue["confidence_interval"]}')
-            st.caption(f'Baseline {clue["baseline"]} · {clue["valid_years"]} complete years · α = {clue["alpha"]} · {clue["source"]}')
+            if clue.get('evidence_kind') == 'playable mystery':
+                st.caption(f'Baseline {clue["baseline"]} · {clue["country_weighting"]} weighting · {clue["source"]}')
+            else:
+                st.write(f'Trend: {clue["trend_mm_decade"]} mm/decade · {clue.get('inference_method','OLS')} p = {clue["p_value"]} · 95% CI: {clue["confidence_interval"]}')
+                st.caption(f'Baseline {clue["baseline"]} · {clue["valid_years"]} complete years · α = {clue["alpha"]} · {clue["source"]}')
             st.write(clue['assessment'])
             if clue.get('recent_country_explanation'):
                 st.markdown('**Pinned recent country briefing**')

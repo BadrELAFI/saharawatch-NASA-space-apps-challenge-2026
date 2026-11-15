@@ -65,7 +65,7 @@ board_component = st.components.v2.component(
 
 def render_evidence_board(clues):
     cards = [dict(id=clue_id(clue), number=index+1, **{key: clue.get(key, '') for key in [
-        'location', 'period', 'baseline', 'hypothesis', 'assessment', 'status', 'trend_mm_decade',
+        'location', 'period', 'baseline', 'hypothesis', 'assessment', 'status', 'evidence_kind', 'trend_mm_decade',
         'p_value', 'confidence_interval', 'inference_method', 'notes', 'source', 'source_sha256',
         'country_weighting', 'annual_data']}) for index, clue in enumerate(clues)]
     state = normalize_board(st.session_state.get('evidence_board'), [card['id'] for card in cards])
