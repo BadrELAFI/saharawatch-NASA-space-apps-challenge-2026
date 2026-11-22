@@ -11,4 +11,4 @@ climate-indices==3.1.0
 statsmodels==0.15.0
 pymannkendall==1.4.3
 pyproj==3.8.0
-kaleido==1.5.1
+kaleido==1.5.2
